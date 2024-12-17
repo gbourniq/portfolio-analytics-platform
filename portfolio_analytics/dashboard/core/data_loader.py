@@ -94,15 +94,27 @@ def validate_and_load(
         raise MetricsCalculationError(f"Error loading data: {str(e)}") from e
 
 
-def prepare_positions_prices_data(
+def prepare_data(
     portfolio_path: Path,
     equity_path: Path,
     fx_path: Path,
     target_currency: Currency = Currency.USD,
 ) -> pd.DataFrame:
-    """
-    Prepares and caches raw data, including portfolio positions,
-    trades, and FX converted portfolio values and cash flows.
+    """# noqa: E501,W505  # pylint: disable=line-too-long
+    Prepares and caches raw data used to calculate PnL.
+    This includes portfolio positions, trades, and FX converted
+    prices, portfolio values and cash flows.
+
+    The data is indexed on (Date, Ticker).
+
+    Returns an expanded view of the PnL in the following shape:
+
+    (Date, Ticker)      Positions  Trades EquityIndex      Mid  ... PortfolioValues  CashFlow
+    2024-10-30  QRVO            0     0.0       SP500      121  ...        0.000000       0.0
+                ROP            65     0.0       SP500      122  ...    27410.009023       0.0
+                SMCI            0     0.0       SP500      120  ...        0.000000       0.0
+                TSLA            0     0.0       SP500      121  ...        0.000000       0.0
+                UAL             0     0.0       SP500      123  ...        0.000000       0.0
     """
     try:
         # Create cache directory if it doesn't exist
@@ -122,18 +134,28 @@ def prepare_positions_prices_data(
             portfolio_path, equity_path, fx_path
         )
 
-        prepared_data = join_positions_and_prices(positions_df, prices_df, fx_df)
+        df = join_positions_and_prices(positions_df, prices_df, fx_df)
+
+        # Calculate USD-converted values
+        df["PortfolioValues"] = df["Positions"] * df["MidUsd"]
+        df["CashFlow"] = (df["Trades"] * df["MidUsd"]).apply(lambda x: -x if x else 0)
 
         # Convert to target currency if needed
         if target_currency != Currency.USD:
-            fx_rates = prepared_data.groupby("Date")[
-                f"USD{target_currency.name}=X"
-            ].first()
-            prepared_data["PortfolioValues"] *= fx_rates
-            prepared_data["CashFlow"] *= fx_rates
+            fx_rates = df.groupby("Date")[f"USD{target_currency.name}=X"].first()
+            df["PortfolioValues"] *= fx_rates
+            df["CashFlow"] *= fx_rates
 
-        prepared_data.to_parquet(cache_file_path)
-        return prepared_data
+        df["Currency"] = target_currency.value
+
+        # Drop fx columns and rename to Mid
+        df = df.drop(columns=[col for col in df.columns if col.endswith("=X")])
+        df = df.rename(columns={"MidUsd": "Mid"})
+
+        log.debug(f"Prepared DataFrame: {df.head()}\n{df.tail()}")
+
+        df.to_parquet(cache_file_path)
+        return df
 
     except Exception as e:
         raise MetricsCalculationError(str(e)) from e
@@ -175,6 +197,11 @@ def join_positions_and_prices(
     ]
     combined_df = combined_df.join(fx_pivot, on="Date")
 
+    # Forward Fill FX to cover full portfolio date ranges
+    for col in combined_df.columns:
+        if col.endswith("=X"):
+            combined_df[col].ffill(inplace=True)
+
     # Edge case when first row has null values, remove it
     combined_df = combined_df[
         combined_df["Mid"].notna() & combined_df["Currency"].notna()
@@ -195,15 +222,7 @@ def join_positions_and_prices(
     # Calculate USD-converted values
     combined_df["MidUsd"] = combined_df["Mid"] * combined_df["FxRate"]
 
-    # Drop intermediate FX rate after conversion
-    combined_df = combined_df.drop(columns=["EURUSD=X", "GBPUSD=X", "FxRate"])
-
-    # Calculate USD-converted values
-    combined_df["PortfolioValues"] = combined_df["Positions"] * combined_df["MidUsd"]
-    combined_df["CashFlow"] = (combined_df["Trades"] * combined_df["MidUsd"]).apply(
-        lambda x: 0 if x == 0 else -x
-    )
-
-    log.info(f"Combined DataFrame: {combined_df.head()}\n{combined_df.tail()}")
+    # Drop Mid and intermediate FX rate after conversion
+    combined_df = combined_df.drop(columns=["Mid", "EURUSD=X", "GBPUSD=X", "FxRate"])
 
     return combined_df
