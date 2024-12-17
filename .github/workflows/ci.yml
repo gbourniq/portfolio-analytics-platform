@@ -69,6 +69,23 @@ jobs:
     - name: Run ${{ matrix.task }}
       run: make ${{ matrix.task }}
 
+    - name: Generate Pylint Badge
+      if: matrix.task == 'lint' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: |
+        SCORE=$(pylint --output-format=text **/*.py | sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p')
+        echo "PYLINT_SCORE=$SCORE" >> $GITHUB_ENV
+
+    - name: Create Pylint Badge
+      if: matrix.task == 'lint' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: schneegans/dynamic-badges-action@v1.6.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: b149841cbef1088a8bf7671efee16734
+        filename: pylint.json
+        label: Pylint
+        message: ${{ env.PYLINT_SCORE }}
+        color: ${{ env.PYLINT_SCORE >= 9 && 'brightgreen' || env.PYLINT_SCORE >= 7 && 'yellow' || 'red' }}
+
     - name: Upload coverage reports
       # Only run for test task
       if: matrix.task == 'test'
