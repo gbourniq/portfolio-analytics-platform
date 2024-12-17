@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.6 (2024-12-17)
+
+### Feature
+
+* Calculate a more realistic pnl ([#8](https://github.com/gbourniq/portfolio-analytics/issues/8)) ([`3c98aa3`](https://github.com/gbourniq/portfolio-analytics/commit/3c98aa3154ec2c168e4d2c003225ea07b9b893ba))
+
 ## v0.1.5 (2024-12-17)
 
 
