@@ -8,6 +8,7 @@ install-poetry:
 	python3.10 -m pip install poetry -U
 
 generate-lockfiles:
+	python3.10 -m poetry lock
 	python3.10 -m poetry export --with=api,dashboard,dev -f requirements.txt --without-hashes -o requirements.txt
 	python3.10 -m poetry export --with=api -f requirements.txt -o portfolio_analytics/api/requirements.txt
 	python3.10 -m poetry export --with=dashboard -f requirements.txt -o portfolio_analytics/dashboard/requirements.txt
