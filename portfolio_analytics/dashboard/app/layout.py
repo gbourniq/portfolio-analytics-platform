@@ -8,7 +8,7 @@ dashboard.
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from portfolio_analytics.common.utils.filesystem import get_portfolio_files
+from portfolio_analytics.common.utils.filesystem import get_portfolio_files, get_version
 from portfolio_analytics.common.utils.instruments import Currency
 
 # Styles configuration
@@ -90,6 +90,15 @@ STYLES = {
         "fontFamily": (
             "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
         ),
+    },
+    "version": {
+        "fontSize": "0.7rem",
+        "color": "#95a5a6",
+        "position": "fixed",
+        "bottom": "10px",
+        "right": "15px",
+        "fontFamily": "'Segoe UI', sans-serif",
+        "opacity": "0.7",
     },
 }
 
@@ -356,7 +365,8 @@ def create_layout(app):
         className="p-4",
     )
 
-    app.index_string = """
+    app.index_string = (
+        """
     <!DOCTYPE html>
     <html>
         <head>
@@ -368,12 +378,21 @@ def create_layout(app):
         <body>
             {%app_entry%}
             <footer>
+                <div id="version">v"""
+        + get_version()
+        + """</div>
                 {%config%}
                 {%scripts%}
                 {%renderer%}
             </footer>
+            <style>
+                #version {"""
+        + "; ".join(f"{k}: {v}" for k, v in STYLES["version"].items())
+        + """}
+            </style>
         </body>
     </html>
     """
+    )
 
     return app
