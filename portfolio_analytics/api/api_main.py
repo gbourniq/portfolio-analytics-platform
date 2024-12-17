@@ -1,7 +1,5 @@
 import os
-from pathlib import Path
 
-import tomli
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +19,7 @@ from portfolio_analytics.api.api_exceptions import (
     portfolio_analytics_exception_handler,
 )
 from portfolio_analytics.api.common import CORS_ORIGIN_DOMAINS, URL_PREFIX, ApiTag
+from portfolio_analytics.common.utils.filesystem import get_version
 from portfolio_analytics.common.utils.logging_config import setup_logger
 
 # Configure logging
@@ -32,18 +31,6 @@ API for portfolio analytics operations.
 Visit the [Portfolio Analytics Dashboard](https://dashboard.portfolio-analytics.click)
  for a visual interface of the portfolios performance.
 """
-
-
-# Read version from pyproject.toml
-def get_version():
-    try:
-        pyproject_path = Path(__file__).parents[2] / "pyproject.toml"
-        with open(pyproject_path, "rb") as f:
-            pyproject_data = tomli.load(f)
-        return pyproject_data["tool"]["poetry"]["version"]
-    except Exception as e:  # pylint: disable=broad-except
-        log.warning(f"Failed to read version from pyproject.toml: {e}")
-        return "0.1.0"  # fallback version
 
 
 # Create FastAPI app

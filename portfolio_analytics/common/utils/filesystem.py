@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Final
 
 import pandas as pd
+import tomli
 
 from portfolio_analytics.common.utils.logging_config import setup_logger
 
@@ -26,6 +27,18 @@ PORTFOLIO_DIR: Final[Path] = DATA_DIR / "portfolios"
 PORTFOLIO_UPLOADS_DIR: Final[Path] = PORTFOLIO_DIR / "uploads"
 PORTFOLIO_SAMPLES_DIR: Final[Path] = PORTFOLIO_UPLOADS_DIR / "samples"
 CACHE_DIR: Final[Path] = DATA_DIR / "cache"
+
+
+# Read version from pyproject.toml
+def get_version():
+    try:
+        pyproject_path = Path(__file__).parents[3] / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            pyproject_data = tomli.load(f)
+        return pyproject_data["tool"]["poetry"]["version"]
+    except Exception as e:  # pylint: disable=broad-except
+        log.warning(f"Failed to read version from pyproject.toml: {e}")
+        return "0.0.0"  # fallback version
 
 
 def get_portfolio_files():

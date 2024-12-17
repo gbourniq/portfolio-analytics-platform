@@ -23,6 +23,7 @@ COPY portfolio_analytics/dashboard/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
 # Copy source code to the container
+COPY pyproject.toml ./pyproject.toml
 COPY portfolio_analytics/common/utils portfolio_analytics/common/utils
 COPY portfolio_analytics/dashboard portfolio_analytics/dashboard
 
