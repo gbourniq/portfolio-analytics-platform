@@ -1,5 +1,6 @@
 from portfolio_analytics.common.utils.instruments import Currency, StockIndex
 
+
 def test_currency_enum():
     assert Currency.USD.value == "USD"
     assert Currency.EUR.value == "EUR"
@@ -8,6 +9,7 @@ def test_currency_enum():
     # Test all expected currencies exist
     expected_currencies = {"USD", "EUR", "GBP"}
     assert {c.value for c in Currency} == expected_currencies
+
 
 def test_stock_index_enum():
     assert StockIndex.SP500.value == "SP500"

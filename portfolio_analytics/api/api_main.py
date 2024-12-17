@@ -95,6 +95,7 @@ for route in app.routes:
 
 @app.get("/", include_in_schema=False)
 async def root():
+    """Redirect root endpoint to API documentation."""
     return RedirectResponse(url=f"{URL_PREFIX}/docs")
 
 

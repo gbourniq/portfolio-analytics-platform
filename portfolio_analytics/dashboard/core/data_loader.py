@@ -184,12 +184,11 @@ def join_positions_and_prices(
     def get_fx_rate(row):
         if row["Currency"] == "USD":
             return 1.0
-        elif row["Currency"] == "EUR":
+        if row["Currency"] == "EUR":
             return row["EURUSD=X"]
-        elif row["Currency"] == "GBP":
+        if row["Currency"] == "GBP":
             return row["GBPUSD=X"]
-        else:
-            raise MetricsCalculationError(f"Unsupported currency: {row['Currency']}")
+        raise MetricsCalculationError(f"Unsupported currency: {row['Currency']}")
 
     combined_df["FxRate"] = combined_df.apply(get_fx_rate, axis=1)
 

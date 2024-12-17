@@ -25,6 +25,11 @@ router = APIRouter(prefix="/market_data", tags=[str(ApiTag.MARKET_DATA)])
 
 
 class EquityUpdateRequest(BaseModel):
+    """Request model for updating equity market data.
+
+    Contains the list of instruments and optional date range parameters.
+    """
+
     instruments: Annotated[
         List[StockIndex],
         Field(
@@ -41,6 +46,7 @@ class EquityUpdateRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_dates(self) -> "EquityUpdateRequest":
+        """Validate that start_date is before end_date if both are provided."""
         if self.start_date and self.end_date:
             if self.start_date > self.end_date:
                 raise ValueError("Start date must be before end date")
@@ -62,6 +68,11 @@ class EquityUpdateRequest(BaseModel):
 
 
 class EquityUpdateResponse(BaseModel):
+    """Response model for equity market data updates.
+
+    Contains the output path and file statistics.
+    """
+
     output_path: str = Field(..., description="Path where equity data was saved")
     file_stats: dict = Field(
         ..., description="Statistics about the created parquet file"
@@ -173,4 +184,4 @@ async def update_equity_data(request: EquityUpdateRequest) -> EquityUpdateRespon
         raise HTTPException(
             status_code=HTTPStatus.SERVICE_UNAVAILABLE,
             detail=f"Failed to update equity data: {str(e)}",
-        )
+        ) from e

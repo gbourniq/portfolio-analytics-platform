@@ -26,6 +26,11 @@ router = APIRouter(prefix="", tags=[str(ApiTag.PORTFOLIO_MANAGEMENT)])
 
 
 class DeletePortfoliosResponse(BaseModel):
+    """Response model for portfolio deletion operations.
+
+    Contains a status message about the operation.
+    """
+
     message: str = Field(..., description="Status message of the operation")
 
     model_config = {

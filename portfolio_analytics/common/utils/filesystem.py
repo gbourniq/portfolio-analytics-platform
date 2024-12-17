@@ -31,12 +31,17 @@ CACHE_DIR: Final[Path] = DATA_DIR / "cache"
 
 # Read version from pyproject.toml
 def get_version():
+    """Read and return the package version from pyproject.toml.
+
+    Returns:
+        str: The version string from pyproject.toml, or '0.0.0' if reading fails
+    """
     try:
         pyproject_path = Path(__file__).parents[3] / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             pyproject_data = tomli.load(f)
         return pyproject_data["tool"]["poetry"]["version"]
-    except Exception as e:  # pylint: disable=broad-except
+    except (FileNotFoundError, KeyError, tomli.TOMLDecodeError) as e:
         log.warning(f"Failed to read version from pyproject.toml: {e}")
         return "0.0.0"  # fallback version
 
@@ -84,7 +89,7 @@ def cleanup_portfolio_uploads():
     for file in files_to_delete:
         try:
             file.unlink()
-        except Exception as e:
+        except (PermissionError, FileNotFoundError) as e:
             log.error(f"Failed to delete {file}: {str(e)}")
 
 
@@ -95,7 +100,7 @@ def cleanup_cache():
     for file in [f for f in CACHE_DIR.glob("*.*") if f.is_file()]:
         try:
             file.unlink()
-        except Exception as e:
+        except (PermissionError, FileNotFoundError) as e:
             log.error(f"Failed to delete {file}: {str(e)}")
 
 
@@ -114,9 +119,8 @@ def read_portfolio_file(content: bytes, file_extension: str) -> pd.DataFrame:
     """
     if file_extension.lower() == ".csv":
         return pd.read_csv(io.BytesIO(content))
-    elif file_extension.lower() == ".xlsx":
+    if file_extension.lower() == ".xlsx":
         return pd.read_excel(io.BytesIO(content), header=1)
-    elif file_extension.lower() == ".parquet":
+    if file_extension.lower() == ".parquet":
         return pd.read_parquet(io.BytesIO(content))
-    else:
-        raise ValueError(f"Unsupported file extension: {file_extension}")
+    raise ValueError(f"Unsupported file extension: {file_extension}")

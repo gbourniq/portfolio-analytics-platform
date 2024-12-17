@@ -29,7 +29,7 @@ lint:
 	python3.10 -m ruff check $(codebase)
 	python3.10 -m mypy $(codebase)
 	python3.10 -m flake8 --max-line-length 89 --max-doc-length 89 $(codebase)
-	python3.10 -m pylint --fail-under=9.0 $(codebase)
+	python3.10 -m pylint --fail-under=9.9 $(codebase)
 
 test:
 	python3.10 -m pytest --cov=$(codebase) --cov-report html --cov-report xml

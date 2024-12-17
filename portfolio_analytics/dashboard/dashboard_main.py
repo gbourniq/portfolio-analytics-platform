@@ -9,6 +9,7 @@ data changes.
 
 import datetime as dtm
 import os
+import sys
 from pathlib import Path
 
 import dash
@@ -58,7 +59,112 @@ server = app.server  # Expose Flask server
 app.config.suppress_callback_exceptions = False
 
 
-# Callback to update the graph and stats
+def _handle_button_styles(ctx, date_picker_style, trigger_source=None) -> dict:
+    """Handle button styles based on context and user interactions.
+
+    Args:
+        ctx (dash.callback_context): The Dash callback context containing trigger
+            information
+        date_picker_style (dict): The current style dictionary for the date picker
+        trigger_source (str, optional): The ID of the component that triggered
+            the callback
+
+    Returns:
+        dict: A dictionary mapping button IDs to their style dictionaries,
+            where each contains CSS properties for active/inactive states.
+    """
+    button_styles = {
+        "1m-button": STYLES["button_inactive"].copy(),
+        "6m-button": STYLES["button_inactive"].copy(),
+        "1y-button": STYLES["button_inactive"].copy(),
+        "3y-button": STYLES["button_inactive"].copy(),
+        "max-button": STYLES["button_inactive"].copy(),
+        "custom-button": STYLES["button_inactive"].copy(),
+    }
+
+    # Set max button as active by default or when changing portfolio/currency/pnl
+    if not ctx.triggered or trigger_source in [
+        "portfolio-selector",
+        "currency-selector",
+        "pnl-type-selector",
+    ]:
+        button_styles["max-button"] = STYLES["button_active"].copy()
+        return button_styles
+
+    # Handle button clicks
+    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if button_id in button_styles:
+        for key in button_styles:
+            button_styles[key] = STYLES["button_inactive"].copy()
+        button_styles[button_id] = STYLES["button_active"].copy()
+
+    # Handle custom date picker
+    if date_picker_style["display"] == "block":
+        for key in button_styles:
+            button_styles[key] = STYLES["button_inactive"].copy()
+        button_styles["custom-button"] = STYLES["button_active"].copy()
+
+    return button_styles
+
+
+def _handle_date_range(ctx, new_min_date, new_max_date, start_date, end_date):
+    """Calculate date range and date picker visibility based on user interactions.
+
+    Args:
+        ctx (dash.callback_context): The Dash callback context with trigger details
+        new_min_date (datetime.date): The earliest possible date in the dataset
+        new_max_date (datetime.date): The latest possible date in the dataset
+        start_date (datetime.date | str): The current start date selection
+        end_date (datetime.date | str): The current end date selection
+
+    Returns:
+        tuple: A tuple containing:
+            - start_date (datetime.date): The calculated start date
+            - end_date (datetime.date): The calculated end date
+            - date_picker_style (dict): Style dictionary controlling date
+                picker visibility
+    """
+    date_picker_style = {"display": "none"}
+    current_date = dtm.datetime.now().date()
+
+    # Set default to max range when no trigger or changing portfolio/currency/pnl
+    if not ctx.triggered or ctx.triggered[0]["prop_id"].split(".")[0] in [
+        "portfolio-selector",
+        "currency-selector",
+        "pnl-type-selector",
+    ]:
+        return new_min_date, new_max_date, date_picker_style
+
+    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    date_range_mapping = {
+        "1m-button": relativedelta(months=1),
+        "6m-button": relativedelta(months=6),
+        "1y-button": relativedelta(years=1),
+        "3y-button": relativedelta(years=3),
+    }
+
+    if button_id in date_range_mapping:
+        end_date = min(current_date, new_max_date)
+        start_date = max(end_date - date_range_mapping[button_id], new_min_date)
+    elif button_id == "max-button":
+        start_date, end_date = new_min_date, new_max_date
+    elif button_id in ["custom-button", "date-range"]:
+        date_picker_style = {"display": "block"}
+
+    # Convert string dates if needed
+    if isinstance(start_date, str):
+        start_date = dtm.datetime.strptime(start_date, "%Y-%m-%d").date()
+    if isinstance(end_date, str):
+        end_date = dtm.datetime.strptime(end_date, "%Y-%m-%d").date()
+
+    # Ensure dates are within valid range
+    start_date = max(start_date, new_min_date)
+    end_date = min(end_date, new_max_date)
+
+    return start_date, end_date, date_picker_style
+
+
 @app.callback(
     [
         Output("portfolio-selector", "options"),
@@ -93,7 +199,7 @@ app.config.suppress_callback_exceptions = False
         Input("custom-button", "n_clicks"),
     ],
 )
-def update_graph(
+def update_graph(  # pylint: disable=unused-argument,too-many-locals
     portfolio_name,
     pnl_type,
     start_date,
@@ -106,14 +212,16 @@ def update_graph(
     btn_max,
     btn_custom,
 ):
+    """Main callback for updating the dashboard"""
     ctx = dash.callback_context
-    date_picker_style = {"display": "none"}
+    trigger_source = ctx.triggered[0]["prop_id"].split(".")[0] if ctx.triggered else None
 
-    # Load data first to get valid date ranges
+    # Load initial data
     target_currency = Currency[currency]
     portfolio_files = get_portfolio_files()
     dropdown_options = [{"label": f.name, "value": str(f)} for f in portfolio_files]
 
+    # Prepare data and handle errors
     try:
         prepared_data = prepare_positions_prices_data(
             Path(portfolio_name),
@@ -121,95 +229,21 @@ def update_graph(
             FX_DATA_PATH,
             target_currency=target_currency,
         )
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         return create_error_state(dropdown_options, str(e))
 
+    # Calculate PnL and get date ranges
     pnl_df = calculate_pnl(prepared_data)
-
-    # Get valid date range from the PnL dataframe
     new_min_date = pnl_df.index.min()
     new_max_date = pnl_df.index.max()
 
-    # Initialize all buttons as inactive
-    button_styles = {
-        "1m-button": STYLES["button_inactive"].copy(),
-        "6m-button": STYLES["button_inactive"].copy(),
-        "1y-button": STYLES["button_inactive"].copy(),
-        "3y-button": STYLES["button_inactive"].copy(),
-        "max-button": STYLES["button_active"].copy(),
-        "custom-button": STYLES["button_inactive"].copy(),
-    }
+    # Handle date ranges and picker visibility
+    start_date, end_date, date_picker_style = _handle_date_range(
+        ctx, new_min_date, new_max_date, start_date, end_date
+    )
 
-    # Handle button clicks or portfolio changes
-    if ctx.triggered:
-        button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-
-        # Set active button based on which was clicked
-        if button_id in button_styles:
-            # Reset all buttons to inactive first
-            for key in button_styles:
-                button_styles[key] = STYLES["button_inactive"].copy()
-            # Set clicked button to active
-            button_styles[button_id] = STYLES["button_active"].copy()
-
-        # Handle portfolio, currency, and pnl-type changes
-        if button_id in [
-            "portfolio-selector",
-            "currency-selector",
-            "pnl-type-selector",
-        ]:
-            start_date = new_min_date
-            end_date = new_max_date
-            # Reset all buttons to inactive first
-            for key in button_styles:
-                button_styles[key] = STYLES["button_inactive"].copy()
-            # Set MAX button to active
-            button_styles["max-button"] = STYLES["button_active"].copy()
-
-        elif button_id in [
-            "1m-button",
-            "6m-button",
-            "1y-button",
-            "3y-button",
-            "max-button",
-        ]:
-            # Handle date range button clicks
-            current_date = dtm.datetime.now().date()
-            end_date = min(current_date, new_max_date)
-
-            if button_id == "1m-button":
-                start_date = max(end_date - relativedelta(months=1), new_min_date)
-            elif button_id == "6m-button":
-                start_date = max(end_date - relativedelta(months=6), new_min_date)
-            elif button_id == "1y-button":
-                start_date = max(end_date - relativedelta(years=1), new_min_date)
-            elif button_id == "3y-button":
-                start_date = max(end_date - relativedelta(years=3), new_min_date)
-            elif button_id == "max-button":
-                start_date = new_min_date
-                end_date = new_max_date
-
-        elif button_id == "custom-button":
-            date_picker_style = {"display": "block"}
-
-        elif button_id in ["date-range"]:
-            # When dates are selected via date picker
-            button_styles["custom-button"] = STYLES["button_active"].copy()
-            date_picker_style = {"display": "block"}
-
-    # If custom dates are being used (date picker is visible), keep custom button active
-    if date_picker_style["display"] == "block":
-        button_styles["custom-button"] = STYLES["button_active"].copy()
-
-    # Convert string dates to datetime objects if they're strings
-    if isinstance(start_date, str):
-        start_date = dtm.datetime.strptime(start_date, "%Y-%m-%d").date()
-    if isinstance(end_date, str):
-        end_date = dtm.datetime.strptime(end_date, "%Y-%m-%d").date()
-
-    # Ensure dates are within valid range
-    start_date = max(start_date, new_min_date)
-    end_date = min(end_date, new_max_date)
+    # Handle button styles
+    button_styles = _handle_button_styles(ctx, date_picker_style, trigger_source)
 
     # Prepare and filter data
     df_plot = pnl_df.reset_index()
@@ -219,7 +253,7 @@ def update_graph(
     pnl_column = "pnl_realised" if pnl_type == "realized" else "pnl_unrealised"
     fig = create_pnl_figure(df_plot, pnl_column)
 
-    # Calculate and add drawdown indicators
+    # Calculate stats and add drawdown indicators
     stats = calculate_stats(
         pnl_df,
         use_realized=(pnl_type == "realized"),
@@ -263,11 +297,20 @@ def update_graph(
 
 
 def _run_dev_server():
-    """Run the development server"""
+    """Run the development server for the dashboard application.
+
+    Checks for the existence of portfolio files in the uploads directory before
+    starting. Uses environment variable 'PORT' (defaults to 8050) and enables
+    debug mode.
+
+    Raises:
+        SystemExit: If no portfolio files are found in the uploads directory
+    """
+
     if not get_portfolio_files():
         log.error("No portfolio files found in the uploads directory.")
         log.error(f"Please add portfolio files to: {PORTFOLIO_UPLOADS_DIR}")
-        exit(1)
+        sys.exit(1)
     app.run_server(host="0.0.0.0", port=int(os.getenv("PORT", "8050")), debug=True)
 
 

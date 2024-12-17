@@ -49,24 +49,40 @@ ruff = "^0.7.0"
 types-requests = "^2.32.0.20241016"
 
 
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 
+# ruff
 [tool.ruff]
 line-length = 89
 
+
+# pylint
 [tool.pylint]
 disable = [
     "logging-fstring-interpolation",
+    "use-dict-literal",
+    "redefined-outer-name",
+    "protected-access",
+    "missing-module-docstring",
+    "too-many-arguments",
+    "too-many-positional-arguments",
 ]
 
+[tool.pylint."SIMILARITIES"]
+min-similarity-lines = 20
+ignore-comments = true
+ignore-imports = true
+
+
+# mypy
 [tool.mypy]
 plugins = [
     "numpy.typing.mypy_plugin"
 ]
+
 [[tool.mypy.overrides]]
 module = [
     "dash.*",
@@ -76,6 +92,8 @@ module = [
 ]
 ignore_missing_imports = true
 
+
+# coverage
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
@@ -92,6 +110,8 @@ exclude_lines = [
 ]
 fail_under = 0
 
+
+# semantic-release
 [tool.semantic_release]
 branch = "master"
 version_toml = "pyproject.toml:tool.poetry.version"

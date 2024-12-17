@@ -104,6 +104,7 @@ STYLES = {
 
 
 def create_layout(app):
+    """Create the layout for the dashboard application."""
     app.layout = dbc.Container(
         [
             dbc.Row(

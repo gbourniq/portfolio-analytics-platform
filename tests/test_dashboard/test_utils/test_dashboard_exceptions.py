@@ -25,7 +25,9 @@ class MissingTickersException(MetricsCalculationError):
         # Find suggestions for each missing ticker
         suggestions = {}
         for ticker in missing_tickers:
-            close_matches = get_close_matches(ticker, available_tickers, n=1, cutoff=0.6)
+            close_matches = get_close_matches(
+                ticker, available_tickers, n=1, cutoff=0.6
+            )
             if close_matches:
                 suggestions[ticker] = close_matches
 

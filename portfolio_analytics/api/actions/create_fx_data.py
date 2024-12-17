@@ -25,6 +25,11 @@ router = APIRouter(prefix="/market_data", tags=[str(ApiTag.MARKET_DATA)])
 
 
 class FXUpdateRequest(BaseModel):
+    """Request model for updating FX market data.
+
+    Contains the list of instruments and optional date range parameters.
+    """
+
     instruments: Annotated[
         List[Currency],
         Field(
@@ -41,6 +46,7 @@ class FXUpdateRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_dates(self) -> "FXUpdateRequest":
+        """Validate that start_date is before end_date if both are provided."""
         if self.start_date and self.end_date:
             if self.start_date > self.end_date:
                 raise ValueError("Start date must be before end date")
@@ -58,6 +64,11 @@ class FXUpdateRequest(BaseModel):
 
 
 class FXUpdateResponse(BaseModel):
+    """Response model for FX market data updates.
+
+    Contains the output path and file statistics.
+    """
+
     output_path: str = Field(..., description="Path where FX data was saved")
     file_stats: dict = Field(
         ..., description="Statistics about the created parquet file"
@@ -162,4 +173,4 @@ async def update_fx_data(request: FXUpdateRequest) -> FXUpdateResponse:
         raise HTTPException(
             status_code=HTTPStatus.SERVICE_UNAVAILABLE,
             detail=f"Failed to update FX data: {str(e)}",
-        )
+        ) from e

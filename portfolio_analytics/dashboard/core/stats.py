@@ -29,62 +29,31 @@ class PortfolioStats:
     period_pnl: float
 
 
-def calculate_stats(
-    pnl_df: pd.DataFrame,
-    use_realized: bool = True,
-    start_date: Optional[dtm.date] = None,
-    end_date: Optional[dtm.date] = None,
-    tickers: Optional[List[str]] = None,
-) -> PortfolioStats:
-    """
-    Calculates performance statistics with optional date range and ticker filtering.
+def _calculate_drawdown(
+    df_sorted: pd.DataFrame, pnl_column: str
+) -> Tuple[float, dtm.date, dtm.date]:
+    """Helper function to calculate drawdown metrics.
+
+    Calculates the maximum drawdown and its corresponding dates from a DataFrame
+    containing PnL data. The drawdown represents the largest peak-to-trough decline in
+    the PnL over the given period.
 
     Args:
-        pnl_df: DataFrame containing PnL data
-        use_realized: If True, uses realized PnL, otherwise uses unrealized PnL
-        start_date: Optional start date for filtering
-        end_date: Optional end date for filtering
-        tickers: Optional list of tickers for filtering
+        df_sorted (pd.DataFrame): A sorted DataFrame containing PnL data with
+            a 'Date' column and the specified PnL column.
+        pnl_column (str): Name of the column containing PnL values to calculate
+            drawdown from.
 
     Returns:
-        PortfolioStats object containing performance metrics
+        Tuple[float, dtm.date, dtm.date]: A tuple containing:
+            - max_drawdown (float): The maximum drawdown value (always positive)
+            - max_drawdown_date (dtm.date): The date when the maximum drawdown occurred
+            - drawdown_start_date (dtm.date): The date when the drawdown period started
+
+    Note:
+        The function assumes the input DataFrame is already sorted by date and contains
+        a 'Date' column of type datetime.date.
     """
-    df_sorted = pnl_df.copy()
-    df_sorted.reset_index(inplace=True)
-
-    pnl_column = "pnl_realised" if use_realized else "pnl_unrealised"
-
-    # Validate and apply date filters
-    portfolio_start, portfolio_end = df_sorted["Date"].min(), df_sorted["Date"].max()
-
-    if start_date and end_date and start_date > end_date:
-        raise MetricsCalculationError(
-            f"Start date {start_date} is after end date {end_date}"
-        )
-
-    if (start_date and start_date < portfolio_start) or (
-        end_date and end_date > portfolio_end
-    ):
-        raise MetricsCalculationError(
-            f"Date range [{start_date or portfolio_start} -"
-            f" {end_date or portfolio_end}] outside portfolio range"
-            f" [{portfolio_start} - {portfolio_end}]"
-        )
-
-    # Apply date filters if provided
-    df_sorted = df_sorted[
-        (df_sorted["Date"] >= (start_date or portfolio_start))
-        & (df_sorted["Date"] <= (end_date or portfolio_end))
-    ]
-
-    # Apply ticker filter if provided
-    if tickers:
-        df_sorted = df_sorted[df_sorted["Ticker"].isin(tickers)]
-        if df_sorted.empty:
-            raise MetricsCalculationError(
-                f"No data found for provided tickers: {tickers}"
-            )
-
     # Calculate drawdown
     df_sorted["pnl_max"] = df_sorted[pnl_column].cummax()
     df_sorted["drawdown"] = df_sorted["pnl_max"] - df_sorted[pnl_column]
@@ -101,14 +70,85 @@ def calculate_stats(
     ].index[0]
     drawdown_start_date = df_sorted.at[drawdown_start_idx, "Date"]
 
-    # Calculate sharpe ratio
+    return max_drawdown, max_drawdown_date, drawdown_start_date
+
+
+def _validate_date_range(
+    df: pd.DataFrame, start_date: Optional[dtm.date], end_date: Optional[dtm.date]
+) -> None:
+    """Validate the provided date range against the DataFrame's date range."""
+    portfolio_start, portfolio_end = df["Date"].min(), df["Date"].max()
+
+    if start_date and end_date and start_date > end_date:
+        raise MetricsCalculationError(
+            f"Start date {start_date} is after end date {end_date}"
+        )
+
+    if (start_date and start_date < portfolio_start) or (
+        end_date and end_date > portfolio_end
+    ):
+        raise MetricsCalculationError(
+            f"Date range [{start_date or portfolio_start} -"
+            f" {end_date or portfolio_end}] outside portfolio range"
+            f" [{portfolio_start} - {portfolio_end}]"
+        )
+
+
+def _filter_dataframe(
+    df: pd.DataFrame,
+    start_date: Optional[dtm.date],
+    end_date: Optional[dtm.date],
+    tickers: Optional[List[str]],
+) -> pd.DataFrame:
+    """Apply date and ticker filters to the DataFrame."""
+    filtered_df = df.copy()
+    portfolio_start, portfolio_end = df["Date"].min(), df["Date"].max()
+
+    # Apply date filters
+    filtered_df = filtered_df[
+        (filtered_df["Date"] >= (start_date or portfolio_start))
+        & (filtered_df["Date"] <= (end_date or portfolio_end))
+    ]
+
+    # Apply ticker filter if provided
+    if tickers:
+        filtered_df = filtered_df[filtered_df["Ticker"].isin(tickers)]
+        if filtered_df.empty:
+            raise MetricsCalculationError(
+                f"No data found for provided tickers: {tickers}"
+            )
+
+    return filtered_df
+
+
+def calculate_stats(
+    pnl_df: pd.DataFrame,
+    use_realized: bool = True,
+    start_date: Optional[dtm.date] = None,
+    end_date: Optional[dtm.date] = None,
+    tickers: Optional[List[str]] = None,
+) -> PortfolioStats:
+    """
+    Calculates performance statistics with optional date range and ticker filtering.
+    """
+    df_sorted = pnl_df.copy()
+    df_sorted.reset_index(inplace=True)
+
+    pnl_column = "pnl_realised" if use_realized else "pnl_unrealised"
+
+    # Validate and filter the DataFrame
+    _validate_date_range(df_sorted, start_date, end_date)
+    df_sorted = _filter_dataframe(df_sorted, start_date, end_date, tickers)
+
+    # Calculate metrics
+    max_drawdown, max_drawdown_date, drawdown_start_date = _calculate_drawdown(
+        df_sorted, pnl_column
+    )
+
     daily_return = df_sorted[pnl_column].diff().copy()
     sharpe_ratio = (daily_return.mean() / daily_return.std()) * np.sqrt(252)
 
-    # Get the starting and ending values for the period
-    period_start_value = df_sorted[pnl_column].iloc[0]
-    period_end_value = df_sorted[pnl_column].iloc[-1]
-    period_pnl = period_end_value - period_start_value
+    period_pnl = df_sorted[pnl_column].iloc[-1] - df_sorted[pnl_column].iloc[0]
 
     return PortfolioStats(
         max_drawdown=max_drawdown,

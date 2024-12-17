@@ -97,7 +97,8 @@ def calculate_stats(
     # Find drawdown start
     cumulative_max = df_sorted.at[max_drawdown_idx, "pnl_max"]
     drawdown_start_idx = df_sorted[
-        (df_sorted[pnl_column] == cumulative_max) & (df_sorted.index <= max_drawdown_idx)
+        (df_sorted[pnl_column] == cumulative_max)
+        & (df_sorted.index <= max_drawdown_idx)
     ].index[0]
     drawdown_start_date = df_sorted.at[drawdown_start_idx, "Date"]
 

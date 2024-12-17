@@ -21,6 +21,11 @@ router = APIRouter(prefix="", tags=[str(ApiTag.PORTFOLIO_MANAGEMENT)])
 
 
 class PortfolioFile(BaseModel):
+    """Model representing a portfolio file's metadata.
+
+    Contains basic file information like name and size.
+    """
+
     filename: str = Field(..., description="Name of the portfolio file")
     size: int = Field(..., description="Size of the file in bytes")
 
@@ -35,6 +40,11 @@ class PortfolioFile(BaseModel):
 
 
 class PortfolioListResponse(BaseModel):
+    """Response model for listing portfolio files.
+
+    Contains a list of portfolio file metadata.
+    """
+
     portfolios: list[PortfolioFile] = Field(
         ..., description="List of available portfolio files"
     )

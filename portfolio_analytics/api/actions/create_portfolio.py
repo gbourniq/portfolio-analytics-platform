@@ -37,6 +37,11 @@ router = APIRouter(prefix="", tags=[str(ApiTag.PORTFOLIO_MANAGEMENT)])
 
 
 class PortfolioUploadResponse(BaseModel):
+    """Response model for portfolio upload operations.
+
+    Contains metadata about the uploaded file.
+    """
+
     filename: str = Field(..., description="Name of the uploaded file")
     size: int = Field(..., description="Size of the file in bytes")
     content_type: str = Field(..., description="Content type of the uploaded file")
@@ -140,7 +145,7 @@ def validate_file_content(content: bytes, file_extension: str) -> None:
     try:
         df = read_portfolio_file(content, file_extension)
     except ValueError as e:
-        raise PortfolioProcessingError(str(e))
+        raise PortfolioProcessingError(str(e)) from e
 
     # Validate required "Date" column exists
     if "Date" not in df.columns:
@@ -152,7 +157,7 @@ def validate_file_content(content: bytes, file_extension: str) -> None:
     except (ValueError, TypeError) as e:
         raise PortfolioValidationError(
             f'The "Date" column must contain valid date/datetime values: {str(e)}'
-        )
+        ) from e
 
     # Validate numeric columns (all columns except Date)
     numeric_columns = df.columns.drop("Date")
