@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.7 (2024-12-17)
+
+### Fix
+
+* Fix pylint badge ([`6e2f996`](https://github.com/gbourniq/portfolio-analytics/commit/6e2f996d113a4788058738fc3e19f35942254ea6))
+
 ## v0.1.6 (2024-12-17)
 
 ### Feature
