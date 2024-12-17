@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.2 (2024-12-17)
+
+### Fix
+
+* Increase api timeout to 120s ([`310478b`](https://github.com/gbourniq/portfolio-analytics/commit/310478b6d56e10266765b61b559ff6ee7d64ba00))
+
 ## v0.1.1 (2024-12-17)
 
 ### Feature
