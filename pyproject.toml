@@ -18,7 +18,7 @@ pyarrow = "^18.1.0"
 
 [tool.poetry.group.api.dependencies]
 fastapi = "^0.115.6"
-python-multipart = "^0.0.19"
+python-multipart = "^0.0.20"
 tomli = "^2.2.1"
 yfinance = "^0.2.50"
 uvicorn = "^0.34.0"
