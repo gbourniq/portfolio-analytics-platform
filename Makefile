@@ -38,8 +38,7 @@ coverage:
 	cd htmlcov && python3.10 -m http.server
 
 clean:
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name ".DS_Store" -delete
+	find . -type f \( -name "*.pyc" -o -name ".DS_Store" -o -name "coverage.xml" \) -delete
 	rm -rf $(cache_dirs)
 
 
