@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.1 (2024-12-17)
+
+### Feature
+
+* Test release version bump via CI ([`f8b0856`](https://github.com/gbourniq/portfolio-analytics/commit/f8b0856ae00a8790807efbe3afb77e520e7e7355))
+
+### Fix
+
+* Resolve semantic release locally ([`0edea7c`](https://github.com/gbourniq/portfolio-analytics/commit/0edea7cf737e35923a0c31ccd7e683a3f3e6042d))
+
 ## v0.1.0 (2024-12-17)
 
 ### Feature
