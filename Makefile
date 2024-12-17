@@ -45,23 +45,23 @@ clean:
 # Build
 
 up:
-	UID=$$(id -u) GID=$$(id -g) docker-compose up -d --build
+	UID=$$(id -u) GID=$$(id -g) docker compose up -d --build
 	@echo "Waiting for services to be healthy..."
 	@for i in $$(seq 1 30); do \
-		if docker-compose ps api | grep -q "healthy" && \
-			docker-compose ps dashboard | grep -q "healthy"; then \
+		if docker compose ps api | grep -q "healthy" && \
+			docker compose ps dashboard | grep -q "healthy"; then \
 			exit 0; \
 		fi; \
 		sleep 2; \
 	done; \
 	if [ $$? -ne 0 ]; then \
 		@echo "ERROR: Services failed to become healthy after 60 seconds" && \
-		docker-compose logs && docker-compose down && exit 1; \
+		docker compose logs && docker compose down && exit 1; \
 	fi
 	@echo "Services are healthy!"
 
 down:
-	docker-compose down
+	docker compose down
 
 build:
 	@echo Checking valid docker build...

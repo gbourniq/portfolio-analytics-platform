@@ -23,7 +23,7 @@ jobs:
 
   quality:
     name: Quality Checks
-    needs: commit-check  # Make quality job wait for commit-check to pass
+    needs: commit-check
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -58,13 +58,11 @@ jobs:
         pip install -r requirements.txt
 
     - name: Set up Docker
-      # Skip Docker setup for build task
-      if: matrix.task != 'build'
+      if: matrix.task == 'build'
       uses: docker/setup-buildx-action@v3
 
     - name: Set up Docker Compose
-      # Skip Docker Compose setup for build task
-      if: matrix.task != 'build'
+      if: matrix.task == 'build'
       run: |
         docker compose version
 
