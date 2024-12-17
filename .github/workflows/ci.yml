@@ -1,0 +1,119 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [ master ]
+  push:
+    branches: [ master ]
+
+jobs:
+  commit-check:
+    name: Check Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Needed to fetch all history for checking commits
+
+    - name: "Check commit messages match angular style"
+      run: |
+        ! git log origin/master..HEAD --oneline --pretty=format:%s | \
+          grep -Ev '^(build|chore|ci|docs|feat|fix|perf|style|refactor|test):|^Merge '
+
+  quality:
+    name: Quality Checks
+    needs: commit-check  # Make quality job wait for commit-check to pass
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [lint, test, build]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      # Skip Python setup for build task
+      if: matrix.task != 'build'
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Cache Python dependencies
+      # Skip cache for build task
+      if: matrix.task != 'build'
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      # Skip dependencies for build task
+      if: matrix.task != 'build'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Set up Docker
+      # Skip Docker setup for build task
+      if: matrix.task != 'build'
+      uses: docker/setup-buildx-action@v3
+
+    - name: Set up Docker Compose
+      # Skip Docker Compose setup for build task
+      if: matrix.task != 'build'
+      run: |
+        docker compose version
+
+    - name: Run ${{ matrix.task }}
+      run: make ${{ matrix.task }}
+
+    - name: Upload coverage reports
+      # Only run for test task
+      if: matrix.task == 'test'
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: false  # TODO: set to true
+
+  release:
+    name: Release
+    needs: [commit-check, quality]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+
+    - name: Semantic Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git pull --rebase
+        python -m semantic_release publish

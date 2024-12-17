@@ -1,0 +1,8 @@
+# Ignore cache directories
+**/__cache__/
+**/.cache/
+**/cache/
+
+# Ignore uploads directories but preserve samples
+**/uploads/*
+!**/uploads/samples/
