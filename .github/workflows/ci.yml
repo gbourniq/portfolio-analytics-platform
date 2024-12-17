@@ -81,7 +81,7 @@ jobs:
       with:
         auth: ${{ secrets.GIST_SECRET }}
         gistID: b149841cbef1088a8bf7671efee16734
-        filename: pylint.json
+        filename: pylint.txt
         label: Pylint
         message: ${{ env.PYLINT_SCORE }}
         color: ${{ env.PYLINT_SCORE >= 9 && 'brightgreen' || env.PYLINT_SCORE >= 7 && 'yellow' || 'red' }}
