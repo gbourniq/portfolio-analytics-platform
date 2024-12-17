@@ -34,7 +34,7 @@ lint:
 test:
 	python3.10 -m pytest --cov=$(codebase) --cov-report html --cov-report xml
 
-coverage:
+test-coverage: test
 	cd htmlcov && python3.10 -m http.server
 
 clean:
