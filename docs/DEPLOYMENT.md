@@ -126,6 +126,12 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Timeout settings (all set to 120 seconds)
+        proxy_connect_timeout 120s;
+        proxy_send_timeout    120s;
+        proxy_read_timeout    120s;
+        keepalive_timeout     120s;
     }
 }
 
@@ -153,6 +159,7 @@ Test and Restart Nginx
 ```
 sudo nginx -t
 sudo systemctl restart nginx
+sudo systemctl reload nginx
 ```
 
 ### DNS Configuration
