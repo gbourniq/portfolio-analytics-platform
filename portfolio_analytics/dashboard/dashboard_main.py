@@ -33,8 +33,11 @@ from portfolio_analytics.dashboard.app.components import (
     create_stats_row,
 )
 from portfolio_analytics.dashboard.app.layout import STYLES, create_layout
-from portfolio_analytics.dashboard.core.data_loader import prepare_positions_prices_data
-from portfolio_analytics.dashboard.core.pnl import calculate_pnl
+from portfolio_analytics.dashboard.core.data_loader import prepare_data
+from portfolio_analytics.dashboard.core.pnl import (
+    calculate_daily_pnl,
+    calculate_pnl_expanded,
+)
 from portfolio_analytics.dashboard.core.stats import (
     calculate_stats,
     get_winners_and_losers,
@@ -108,34 +111,33 @@ def _handle_button_styles(ctx, date_picker_style, trigger_source=None) -> dict:
 
 
 def _handle_date_range(ctx, new_min_date, new_max_date, start_date, end_date):
-    """Calculate date range and date picker visibility based on user interactions.
-
-    Args:
-        ctx (dash.callback_context): The Dash callback context with trigger details
-        new_min_date (datetime.date): The earliest possible date in the dataset
-        new_max_date (datetime.date): The latest possible date in the dataset
-        start_date (datetime.date | str): The current start date selection
-        end_date (datetime.date | str): The current end date selection
-
-    Returns:
-        tuple: A tuple containing:
-            - start_date (datetime.date): The calculated start date
-            - end_date (datetime.date): The calculated end date
-            - date_picker_style (dict): Style dictionary controlling date
-                picker visibility
-    """
+    """Calculate date range and date picker visibility based on user interactions."""
     date_picker_style = {"display": "none"}
     current_date = dtm.datetime.now().date()
 
-    # Set default to max range when no trigger or changing portfolio/currency/pnl
-    if not ctx.triggered or ctx.triggered[0]["prop_id"].split(".")[0] in [
-        "portfolio-selector",
-        "currency-selector",
-        "pnl-type-selector",
-    ]:
+    # Convert string dates if needed
+    if isinstance(start_date, str):
+        start_date = dtm.datetime.strptime(start_date, "%Y-%m-%d").date()
+    if isinstance(end_date, str):
+        end_date = dtm.datetime.strptime(end_date, "%Y-%m-%d").date()
+
+    # Get trigger information
+    if not ctx.triggered:
         return new_min_date, new_max_date, date_picker_style
 
     button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    # Keep date picker visible if it's already shown and we're interacting with it
+    if button_id == "date-range":
+        date_picker_style = {"display": "block"}
+        # Ensure dates are within valid range
+        start_date = max(start_date, new_min_date)
+        end_date = min(end_date, new_max_date)
+        return start_date, end_date, date_picker_style
+
+    # Handle other triggers
+    if button_id in ["portfolio-selector", "currency-selector", "pnl-type-selector"]:
+        return new_min_date, new_max_date, date_picker_style
 
     date_range_mapping = {
         "1m-button": relativedelta(months=1),
@@ -149,18 +151,11 @@ def _handle_date_range(ctx, new_min_date, new_max_date, start_date, end_date):
         start_date = max(end_date - date_range_mapping[button_id], new_min_date)
     elif button_id == "max-button":
         start_date, end_date = new_min_date, new_max_date
-    elif button_id in ["custom-button", "date-range"]:
+    elif button_id == "custom-button":
         date_picker_style = {"display": "block"}
-
-    # Convert string dates if needed
-    if isinstance(start_date, str):
-        start_date = dtm.datetime.strptime(start_date, "%Y-%m-%d").date()
-    if isinstance(end_date, str):
-        end_date = dtm.datetime.strptime(end_date, "%Y-%m-%d").date()
-
-    # Ensure dates are within valid range
-    start_date = max(start_date, new_min_date)
-    end_date = min(end_date, new_max_date)
+        # Ensure dates are within valid range
+        start_date = max(start_date, new_min_date)
+        end_date = min(end_date, new_max_date)
 
     return start_date, end_date, date_picker_style
 
@@ -187,7 +182,6 @@ def _handle_date_range(ctx, new_min_date, new_max_date, start_date, end_date):
     ],
     [
         Input("portfolio-selector", "value"),
-        Input("pnl-type-selector", "value"),
         Input("date-range", "start_date"),
         Input("date-range", "end_date"),
         Input("currency-selector", "value"),
@@ -201,7 +195,6 @@ def _handle_date_range(ctx, new_min_date, new_max_date, start_date, end_date):
 )
 def update_graph(  # pylint: disable=unused-argument,too-many-locals
     portfolio_name,
-    pnl_type,
     start_date,
     end_date,
     currency,
@@ -223,24 +216,34 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
 
     # Prepare data and handle errors
     try:
-        prepared_data = prepare_positions_prices_data(
+        prepared_data = prepare_data(
             Path(portfolio_name),
             EQUITY_FILE_PATH,
             FX_DATA_PATH,
             target_currency=target_currency,
         )
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:  # pylint: disable=broad-except
         return create_error_state(dropdown_options, str(e))
 
-    # Calculate PnL and get date ranges
-    pnl_df = calculate_pnl(prepared_data)
-    new_min_date = pnl_df.index.min()
-    new_max_date = pnl_df.index.max()
+    # Get full date range from prepared data
+    new_min_date = prepared_data.index.get_level_values("Date").min()
+    new_max_date = prepared_data.index.get_level_values("Date").max()
 
     # Handle date ranges and picker visibility
     start_date, end_date, date_picker_style = _handle_date_range(
         ctx, new_min_date, new_max_date, start_date, end_date
     )
+
+    # Filter data between start and end dates
+    prepared_data = prepared_data[
+        (prepared_data.index.get_level_values("Date") >= start_date)
+        & (prepared_data.index.get_level_values("Date") <= end_date)
+    ]
+
+    pnl_expanded_df = calculate_pnl_expanded(prepared_data)
+
+    # Calculate PnL and get date ranges
+    pnl_df = calculate_daily_pnl(pnl_expanded_df)
 
     # Handle button styles
     button_styles = _handle_button_styles(ctx, date_picker_style, trigger_source)
@@ -250,22 +253,14 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
     df_plot = df_plot[(df_plot["Date"] >= start_date) & (df_plot["Date"] <= end_date)]
 
     # Create figure with selected PnL type
-    pnl_column = "pnl_realised" if pnl_type == "realized" else "pnl_unrealised"
-    fig = create_pnl_figure(df_plot, pnl_column)
+    fig = create_pnl_figure(df_plot)
 
     # Calculate stats and add drawdown indicators
-    stats = calculate_stats(
-        pnl_df,
-        use_realized=(pnl_type == "realized"),
-        start_date=start_date,
-        end_date=end_date,
-    )
+    stats = calculate_stats(pnl_df)
     add_drawdown_indicators(fig, stats, start_date, end_date)
 
     # Get winners and losers
-    winners, losers = get_winners_and_losers(
-        prepared_data, start_date=start_date, end_date=end_date
-    )
+    winners, losers = get_winners_and_losers(pnl_expanded_df)
 
     # Create tables
     winners_table = create_performance_table(

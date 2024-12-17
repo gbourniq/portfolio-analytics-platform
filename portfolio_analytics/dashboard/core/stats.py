@@ -4,7 +4,7 @@ Performance statistics calculation module for the Portfolio Analytics Dashboard.
 
 import datetime as dtm
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -29,9 +29,7 @@ class PortfolioStats:
     period_pnl: float
 
 
-def _calculate_drawdown(
-    df_sorted: pd.DataFrame, pnl_column: str
-) -> Tuple[float, dtm.date, dtm.date]:
+def _calculate_drawdown(df_sorted: pd.DataFrame) -> Tuple[float, dtm.date, dtm.date]:
     """Helper function to calculate drawdown metrics.
 
     Calculates the maximum drawdown and its corresponding dates from a DataFrame
@@ -41,8 +39,6 @@ def _calculate_drawdown(
     Args:
         df_sorted (pd.DataFrame): A sorted DataFrame containing PnL data with
             a 'Date' column and the specified PnL column.
-        pnl_column (str): Name of the column containing PnL values to calculate
-            drawdown from.
 
     Returns:
         Tuple[float, dtm.date, dtm.date]: A tuple containing:
@@ -55,100 +51,38 @@ def _calculate_drawdown(
         a 'Date' column of type datetime.date.
     """
     # Calculate drawdown
-    df_sorted["pnl_max"] = df_sorted[pnl_column].cummax()
-    df_sorted["drawdown"] = df_sorted["pnl_max"] - df_sorted[pnl_column]
+    df_sorted["PnLMax"] = df_sorted["PnL"].cummax()
+    df_sorted["Drawdown"] = df_sorted["PnLMax"] - df_sorted["PnL"]
 
     # Find maximum drawdown
-    max_drawdown = df_sorted["drawdown"].max()
-    max_drawdown_idx = df_sorted["drawdown"].idxmax()
+    max_drawdown = df_sorted["Drawdown"].max()
+    max_drawdown_idx = df_sorted["Drawdown"].idxmax()
     max_drawdown_date = df_sorted.at[max_drawdown_idx, "Date"]
 
     # Find drawdown start
-    cumulative_max = df_sorted.at[max_drawdown_idx, "pnl_max"]
+    cumulative_max = df_sorted.at[max_drawdown_idx, "PnLMax"]
     drawdown_start_idx = df_sorted[
-        (df_sorted[pnl_column] == cumulative_max) & (df_sorted.index <= max_drawdown_idx)
+        (df_sorted["PnL"] == cumulative_max) & (df_sorted.index <= max_drawdown_idx)
     ].index[0]
     drawdown_start_date = df_sorted.at[drawdown_start_idx, "Date"]
 
     return max_drawdown, max_drawdown_date, drawdown_start_date
 
 
-def _validate_date_range(
-    df: pd.DataFrame, start_date: Optional[dtm.date], end_date: Optional[dtm.date]
-) -> None:
-    """Validate the provided date range against the DataFrame's date range."""
-    portfolio_start, portfolio_end = df["Date"].min(), df["Date"].max()
-
-    if start_date and end_date and start_date > end_date:
-        raise MetricsCalculationError(
-            f"Start date {start_date} is after end date {end_date}"
-        )
-
-    if (start_date and start_date < portfolio_start) or (
-        end_date and end_date > portfolio_end
-    ):
-        raise MetricsCalculationError(
-            f"Date range [{start_date or portfolio_start} -"
-            f" {end_date or portfolio_end}] outside portfolio range"
-            f" [{portfolio_start} - {portfolio_end}]"
-        )
-
-
-def _filter_dataframe(
-    df: pd.DataFrame,
-    start_date: Optional[dtm.date],
-    end_date: Optional[dtm.date],
-    tickers: Optional[List[str]],
-) -> pd.DataFrame:
-    """Apply date and ticker filters to the DataFrame."""
-    filtered_df = df.copy()
-    portfolio_start, portfolio_end = df["Date"].min(), df["Date"].max()
-
-    # Apply date filters
-    filtered_df = filtered_df[
-        (filtered_df["Date"] >= (start_date or portfolio_start))
-        & (filtered_df["Date"] <= (end_date or portfolio_end))
-    ]
-
-    # Apply ticker filter if provided
-    if tickers:
-        filtered_df = filtered_df[filtered_df["Ticker"].isin(tickers)]
-        if filtered_df.empty:
-            raise MetricsCalculationError(
-                f"No data found for provided tickers: {tickers}"
-            )
-
-    return filtered_df
-
-
-def calculate_stats(
-    pnl_df: pd.DataFrame,
-    use_realized: bool = True,
-    start_date: Optional[dtm.date] = None,
-    end_date: Optional[dtm.date] = None,
-    tickers: Optional[List[str]] = None,
-) -> PortfolioStats:
+def calculate_stats(pnl_daily_df: pd.DataFrame) -> PortfolioStats:
     """
     Calculates performance statistics with optional date range and ticker filtering.
     """
-    df_sorted = pnl_df.copy()
+    df_sorted = pnl_daily_df.copy()
     df_sorted.reset_index(inplace=True)
 
-    pnl_column = "pnl_realised" if use_realized else "pnl_unrealised"
-
-    # Validate and filter the DataFrame
-    _validate_date_range(df_sorted, start_date, end_date)
-    df_sorted = _filter_dataframe(df_sorted, start_date, end_date, tickers)
-
     # Calculate metrics
-    max_drawdown, max_drawdown_date, drawdown_start_date = _calculate_drawdown(
-        df_sorted, pnl_column
-    )
+    max_drawdown, max_drawdown_date, drawdown_start_date = _calculate_drawdown(df_sorted)
 
-    daily_return = df_sorted[pnl_column].diff().copy()
+    daily_return = df_sorted["PnL"].diff().copy()
     sharpe_ratio = (daily_return.mean() / daily_return.std()) * np.sqrt(252)
 
-    period_pnl = df_sorted[pnl_column].iloc[-1] - df_sorted[pnl_column].iloc[0]
+    period_pnl = df_sorted["PnL"].iloc[-1] - df_sorted["PnL"].iloc[0]
 
     return PortfolioStats(
         max_drawdown=max_drawdown,
@@ -160,35 +94,24 @@ def calculate_stats(
 
 
 def get_winners_and_losers(
-    positions_prices_df: pd.DataFrame,
-    start_date: Optional[dtm.date] = None,
-    end_date: Optional[dtm.date] = None,
+    pnl_expanded: pd.DataFrame,
     top_n: int = 5,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Calculate top winners and losers based on portfolio values (unrealised PnL).
 
     Args:
-        positions_prices_df: DataFrame containing portfolio positions and their values
-        start_date: Optional start date for filtering
-        end_date: Optional end date for filtering
+        pnl_expanded: DataFrame containing full PnL data
         top_n: Number of top/bottom performers to return
 
     Returns:
         Tuple of (winners_df, losers_df)
     """
     try:
-        # Filter by date if provided
-        df = positions_prices_df.copy()
-        if start_date or end_date:
-            dates = pd.to_datetime(df.index.get_level_values("Date")).date
-            df = df[
-                (dates >= (start_date or dates.min()))
-                & (dates <= (end_date or dates.max()))
-            ]
 
         # Calculate PnL per ticker
-        ticker_pnl = df.groupby("Ticker")["PortfolioValues"].sum()
+        pnl_expanded.sort_index(inplace=True)
+        ticker_pnl = pnl_expanded.groupby("Ticker")["PnL"].last()
 
         # Create DataFrames for winners and losers
         winners = pd.DataFrame(

@@ -21,18 +21,18 @@ def get_currency_symbol(currency: Currency) -> str:
     return symbols.get(currency, "$")
 
 
-def create_pnl_figure(df_plot, pnl_column):
+def create_pnl_figure(df_plot):
     """
     Creates a styled line chart for PnL visualization.
 
     Args:
         df_plot (pd.DataFrame): DataFrame containing Date and PnL columns
-        pnl_column (str): Column name for PnL values to plot
 
     Returns:
         plotly.graph_objects.Figure: Styled line chart
     """
-    fig = px.line(df_plot, x="Date", y=pnl_column)
+    df = df_plot.copy().reset_index()
+    fig = px.line(df, x="Date", y="PnL")
     fig.update_layout(xaxis_title="", yaxis_title="", showlegend=False)
     fig.update_traces(
         fill="tozeroy", fillcolor="rgba(0,100,80,0.2)", line_color="rgb(0,100,80)"

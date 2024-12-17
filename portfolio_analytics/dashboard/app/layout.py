@@ -225,28 +225,6 @@ def create_layout(app):
                 [
                     dbc.Col(
                         [
-                            dcc.Dropdown(
-                                id="pnl-type-selector",
-                                options=[
-                                    {"label": "Unrealized PnL", "value": "unrealized"},
-                                    {"label": "Realized PnL", "value": "realized"},
-                                ],
-                                value="unrealized",
-                                clearable=False,
-                                style={
-                                    "width": "200px",
-                                    "backgroundColor": "white",
-                                    "borderRadius": "8px",
-                                    "fontWeight": "500",
-                                },
-                                className="custom-dropdown mb-2",
-                            ),
-                        ],
-                        width=3,
-                        className="offset-1",
-                    ),
-                    dbc.Col(
-                        [
                             html.Div(
                                 [
                                     dbc.ButtonGroup(
@@ -299,7 +277,7 @@ def create_layout(app):
                             ),
                         ],
                         width=3,
-                        className="offset-4 d-flex justify-content-end",
+                        className="offset-8 d-flex justify-content-end",
                     ),
                 ]
             ),
