@@ -99,6 +99,9 @@ jobs:
     name: Integration Tests
     needs: quality
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [api, dashboard]
 
     steps:
     - name: Checkout code
@@ -117,15 +120,12 @@ jobs:
     - name: Set up Docker
       uses: docker/setup-buildx-action@v3
 
-    - name: Start containers
-      run: make up
+    - name: Set up Docker Compose
+      run: |
+        docker compose version
 
-    - name: Run integration tests
-      run: make integration-test
-
-    - name: Stop containers
-      if: always()
-      run: make down
+    - name: Start ${{ matrix.component }} service and run integration tests
+      run: make test-${{ matrix.component }}
 
   release:
     name: Release

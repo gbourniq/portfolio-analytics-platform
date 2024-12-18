@@ -128,4 +128,6 @@ build_command = false
 [tool.pytest.ini_options]
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "api_integration: marks tests as API integration tests",
+    "dashboard_integration: marks tests as dashboard integration tests"
 ]
