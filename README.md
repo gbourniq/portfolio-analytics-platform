@@ -35,6 +35,10 @@ A comprehensive portfolio management solution consisting of two main components:
 ### Quick Start with Docker
 
 ```bash
+# For Docker Compose V2
+docker compose up
+
+# For Docker Compose V1
 docker-compose up
 ```
 

@@ -49,7 +49,7 @@ test-coverage: test
 # Docker
 
 up:
-	UID=$$(id -u) GID=$$(id -g) docker-compose up -d --build
+	UID=$$(id -u) GID=$$(id -g) docker compose up -d --build
 	@echo "Waiting for services to be healthy..."
 	@end_time=$$(( $$(date +%s) + 60 )); \
 	while [ $$(date +%s) -lt $$end_time ]; do \
@@ -60,10 +60,10 @@ up:
 		sleep 1; \
 	done; \
 	echo "ERROR: Services failed to become healthy after 60 seconds" && \
-	docker-compose logs && docker-compose down && exit 1
+	docker compose logs && docker compose down && exit 1
 
 down:
-	docker-compose down
+	docker compose down
 
 build: up down
 
