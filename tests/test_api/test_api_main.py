@@ -43,6 +43,7 @@ class TestAPIMain:
     @pytest.mark.parametrize(
         "route_path,expected_name",
         [
+            ("/health", ""),
             ("/portfolio", ""),
             ("/market_data/fx", ""),
             ("/market_data/equity", ""),
@@ -102,6 +103,7 @@ class TestAPIMain:
 
         # Then
         expected_paths = {
+            "/health",
             "/portfolio",
             "/portfolio/download",
             "/portfolio/download/{filename}",

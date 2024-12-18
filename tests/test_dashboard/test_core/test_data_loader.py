@@ -71,6 +71,26 @@ class TestValidateAndLoad:
     ):
         """Tests successful loading of all required data files."""
         # Given
+        # Convert Date column to datetime before saving
+        sample_portfolio_df["Date"] = pd.to_datetime(sample_portfolio_df["Date"]).dt.date
+
+        # Convert MultiIndex dates to datetime.date
+        dates = pd.to_datetime(sample_prices_df.index.get_level_values("Date")).date
+        tickers = sample_prices_df.index.get_level_values("Ticker").unique()
+        new_index = pd.MultiIndex.from_product(
+            [dates, tickers], names=["Date", "Ticker"]
+        )
+        sample_prices_df = sample_prices_df.reindex(new_index)
+
+        # Do the same for fx_df
+        dates = pd.to_datetime(sample_fx_df.index.get_level_values("Date")).date
+        tickers = sample_fx_df.index.get_level_values("Ticker").unique()
+        new_index = pd.MultiIndex.from_product(
+            [dates, tickers], names=["Date", "Ticker"]
+        )
+        sample_fx_df = sample_fx_df.reindex(new_index)
+
+        # Save files
         holdings_path = tmp_path / "holdings.csv"
         sample_portfolio_df.to_csv(holdings_path)
         prices_path = tmp_path / "prices.parquet"
@@ -100,8 +120,28 @@ class TestValidateAndLoad:
     ):
         """Tests error handling when tickers are missing from price data."""
         # Given
-        holdings_path = tmp_path / "holdings.csv"
+        # Convert Date column to datetime.date before saving
+        sample_portfolio_df["Date"] = pd.to_datetime(sample_portfolio_df["Date"]).dt.date
         sample_portfolio_df["MISSING"] = [300, 350]  # Add missing ticker
+
+        # Convert MultiIndex dates to datetime.date
+        dates = pd.to_datetime(sample_prices_df.index.get_level_values("Date")).date
+        tickers = sample_prices_df.index.get_level_values("Ticker").unique()
+        new_index = pd.MultiIndex.from_product(
+            [dates, tickers], names=["Date", "Ticker"]
+        )
+        sample_prices_df = sample_prices_df.reindex(new_index)
+
+        # Do the same for fx_df
+        dates = pd.to_datetime(sample_fx_df.index.get_level_values("Date")).date
+        tickers = sample_fx_df.index.get_level_values("Ticker").unique()
+        new_index = pd.MultiIndex.from_product(
+            [dates, tickers], names=["Date", "Ticker"]
+        )
+        sample_fx_df = sample_fx_df.reindex(new_index)
+
+        # Save files
+        holdings_path = tmp_path / "holdings.csv"
         sample_portfolio_df.to_csv(holdings_path)
         prices_path = tmp_path / "prices.parquet"
         sample_prices_df.to_parquet(prices_path)

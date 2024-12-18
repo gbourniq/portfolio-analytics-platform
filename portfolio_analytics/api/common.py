@@ -26,11 +26,9 @@ class ApiTagBase(Enum):
 
 
 class ApiTag(ApiTagBase):
-    """Enumeration of API tags used for organizing and documenting endpoints.
+    """API endpoint tags for grouping and documentation purposes."""
 
-    Contains predefined tags for different API operation categories like market data
-    and portfolio management, including their descriptions for OpenAPI documentation.
-    """
+    SYSTEM = {"name": "System", "description": "For system-related endpoints."}
 
     MARKET_DATA = {
         "name": "Market Data",
