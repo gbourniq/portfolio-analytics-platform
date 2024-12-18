@@ -59,6 +59,16 @@ def validate_and_load(
             ("Date", "<=", date_range[1]),
         ]
         prices_df = pd.read_parquet(prices_path, filters=filters)
+
+        # Only load index structure for validation
+        fx_dates = pd.read_parquet(fx_path, columns=[]).index.get_level_values("Date")
+        if date_range[0] < fx_dates.min() or date_range[1] > fx_dates.max():
+            raise MetricsCalculationError(
+                f"Portfolio date range [{date_range[0]} - {date_range[1]}] not fully"
+                f" covered by FX data coverage [{fx_dates.min()} - {fx_dates.max()}]"
+            )
+
+        # Load full FX data only after validation
         fx_df = pd.read_parquet(fx_path, filters=filters)
 
         # Validate tickers
@@ -66,14 +76,6 @@ def validate_and_load(
         missing_tickers = [t for t in portfolio_tickers if t not in available_tickers]
         if missing_tickers:
             raise MissingTickersException(missing_tickers, list(available_tickers))
-
-        # Validate FX data covers portfolio dates
-        fx_dates = fx_df.index.get_level_values("Date")
-        if date_range[0] < fx_dates.min() or date_range[1] > fx_dates.max():
-            raise MetricsCalculationError(
-                f"Portfolio date range [{date_range[0]} - {date_range[1]}] not fully"
-                f" covered by FX data coverage [{fx_dates.min()} - {fx_dates.max()}]"
-            )
 
         # Filter prices to portfolio date range and tickers
         prices_df = prices_df[
