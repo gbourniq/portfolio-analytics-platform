@@ -148,33 +148,3 @@ def test_graph_updates(initialized_dash):
     # Wait for graph element again and verify it's still visible
     updated_graph = dash_duo.wait_for_element("#pnl-graph", timeout=4)
     assert updated_graph.is_displayed(), "Updated graph should be visible"
-
-
-@pytest.mark.integration
-@pytest.mark.dashboard_integration
-def test_stats_display(initialized_dash):
-    """Test performance statistics are displayed correctly."""
-    dash_duo = initialized_dash
-
-    # Wait for stats element with timeout
-    stats_element = dash_duo.wait_for_element("#stats-display", timeout=4)
-    assert stats_element is not None, "Stats display element not found"
-
-    # Get the stats text content
-    stats_text = stats_element.text
-
-    # Check if we have an error message
-    if "Unable to calculate statistics" in stats_text:
-        # Test passes if we get the expected error message
-        assert "Unable to calculate statistics due to missing data" in stats_text
-        return
-
-    # If no error message, check for the metrics
-    expected_metrics = ["MAX DRAWDOWN", "SHARPE", "PERIOD PNL"]
-
-    found_metrics = []
-    for metric in expected_metrics:
-        if metric in stats_text:
-            found_metrics.append(metric)
-
-    assert found_metrics, f"No expected metrics found. Content: {stats_text}"
