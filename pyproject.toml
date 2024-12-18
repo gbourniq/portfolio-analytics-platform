@@ -47,6 +47,7 @@ pytest-cov = "^6.0.0"
 python-semantic-release = "7.34.6"
 ruff = "^0.7.0"
 types-requests = "^2.32.0.20241016"
+tomli-w = "^1.1.0"
 
 
 [build-system]

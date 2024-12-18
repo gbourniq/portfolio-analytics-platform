@@ -38,7 +38,7 @@ def validate_and_load(
         portfolio = read_portfolio_file(
             content=holdings_path.read_bytes(), file_extension=holdings_path.suffix
         )
-        portfolio["Date"] = pd.to_datetime(portfolio["Date"]).dt.date
+        portfolio["Date"] = pd.to_datetime(portfolio["Date"])
 
         # Reshape portfolio
         positions_df = portfolio.melt(
@@ -51,7 +51,10 @@ def validate_and_load(
         portfolio_tickers = (
             positions_df.index.get_level_values("Ticker").unique().tolist()
         )
-        date_range = (portfolio.Date.min(), portfolio.Date.max())
+        date_range = (
+            portfolio.Date.min().strftime("%Y-%m-%d"),
+            portfolio.Date.max().strftime("%Y-%m-%d"),
+        )
 
         # Load and filter price data with date filters for efficiency
         filters = [
@@ -90,6 +93,8 @@ def validate_and_load(
 
         return positions_df, prices_df, fx_df
 
+    except MissingTickersException as e:
+        raise e
     except Exception as e:
         raise MetricsCalculationError(f"Error loading data: {str(e)}") from e
 

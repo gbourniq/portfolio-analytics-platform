@@ -120,7 +120,7 @@ def validate_file_metadata(file: UploadFile) -> None:
     # Check file extension
     if not any(file.filename.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS):
         raise BadRequestError(
-            f"Only {', '.join(ALLOWED_EXTENSIONS)} files are supported"
+            f"Only {', '.join(sorted(ALLOWED_EXTENSIONS))} files are supported"
         )
 
     if (PORTFOLIO_UPLOADS_DIR / file.filename).exists() or (

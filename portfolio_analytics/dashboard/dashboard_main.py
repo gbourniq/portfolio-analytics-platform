@@ -193,6 +193,7 @@ def _handle_date_range(ctx, new_min_date, new_max_date, start_date, end_date):
         Input("custom-button", "n_clicks"),
     ],
 )
+# pragma: no cover
 def update_graph(  # pylint: disable=unused-argument,too-many-locals
     portfolio_name,
     start_date,
