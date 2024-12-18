@@ -1,6 +1,7 @@
 codebase ?= portfolio_analytics
 tests_dir ?= tests
 cache_dirs := .pytest_cache htmlcov .coverage .mypy_cache .ruff_cache
+DOCKER_COMPOSE := $(shell which docker-compose > /dev/null 2>&1 && echo docker-compose || echo docker compose)
 
 
 # Development
@@ -46,10 +47,10 @@ test-coverage: test
 	cd htmlcov && python3.10 -m http.server
 
 
-# Docker
+# Docker build
 
 up:
-	UID=$$(id -u) GID=$$(id -g) docker compose up -d --build
+	UID=$$(id -u) GID=$$(id -g) $(DOCKER_COMPOSE) up -d --build
 	@echo "Waiting for services to be healthy..."
 	@end_time=$$(( $$(date +%s) + 60 )); \
 	while [ $$(date +%s) -lt $$end_time ]; do \
@@ -60,17 +61,21 @@ up:
 		sleep 1; \
 	done; \
 	echo "ERROR: Services failed to become healthy after 60 seconds" && \
-	docker compose logs && docker compose down && exit 1
+	$(DOCKER_COMPOSE) logs && $(DOCKER_COMPOSE) down && exit 1
 
 down:
-	docker compose down
+	$(DOCKER_COMPOSE) down
 
 build: up down
 
 
 # Integration Testing
 
-integration-test:
-	@echo "Running quick integration tests..."
-	pytest tests/integration -v -m integration
-	@echo "Tests passed successfully"
+test-dashboard:
+	docker build -t dash-app-tests . -f tests/integration/test_dashboard.Dockerfile
+	docker run --rm dash-app-tests
+
+test-api:
+	make up
+	pytest tests/integration -v -m api_integration
+	make down

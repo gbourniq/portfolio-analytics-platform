@@ -36,6 +36,7 @@ def api_client() -> Generator[requests.Session, None, None]:
 
 
 @pytest.mark.integration
+@pytest.mark.api_integration
 class TestFXDataPipeline:
     """Test FX market data pipeline workflow."""
 
@@ -67,6 +68,7 @@ class TestFXDataPipeline:
 
 
 @pytest.mark.integration
+@pytest.mark.api_integration
 class TestPortfolioWorkflow:
     """Test complete portfolio management workflow."""
 
