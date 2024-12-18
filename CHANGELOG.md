@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.8 (2024-12-18)
+
+### Documentation
+
+* Add more info to the market_data/equity/ endpoint description ([`72f3914`](https://github.com/gbourniq/portfolio-analytics/commit/72f391446c2872717b27d6715468df94930f81ba))
+
 ## v0.1.7 (2024-12-17)
 
 ### Fix
