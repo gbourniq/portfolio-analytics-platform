@@ -12,6 +12,7 @@ from portfolio_analytics.api.actions import (
     create_portfolio,
     delete_portfolios,
     download_portfolios,
+    health,
     list_portfolios,
 )
 from portfolio_analytics.api.api_exceptions import (
@@ -75,6 +76,9 @@ app.add_middleware(  # type: ignore
 )
 
 # Register routers
+
+# System
+app.include_router(health.router)
 
 # Portfolio
 app.include_router(create_portfolio.router)

@@ -224,6 +224,8 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
             target_currency=target_currency,
         )
     except Exception as e:  # pylint: disable=broad-except
+        # Note: Any error can be troubleshooted step by step
+        # using debug mode on scripts/run_analysis.py
         return create_error_state(dropdown_options, str(e))
 
     # Get full date range from prepared data

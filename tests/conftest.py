@@ -1,53 +1,8 @@
 """This file defines pytest fixtures available for all tests."""
 
-import datetime as dtm
 import uuid
 
 import pytest
-
-
-@pytest.fixture(autouse=True)
-def any_timestamp():
-    """A fixture that checks if the compared value is a valid iso timestamp"""
-
-    class AnyTimestamp:
-        value = None
-
-        def __eq__(self, other):
-            try:
-                dtm.datetime.fromisoformat(other)
-                self.value = other
-                return True
-            except ValueError:
-                self.value = f"<Invalid timestamp: {other}>"
-                return False
-
-        def __repr__(self):
-            return str(self.value) if self.value else super().__repr__()
-
-    return AnyTimestamp()
-
-
-@pytest.fixture(autouse=True)
-def any_string():
-    """A fixture that checks if the compared value is a string"""
-
-    class AnyString:
-        value = None
-
-        def __eq__(self, other):
-            try:
-                assert isinstance(other, str)
-                self.value = other
-                return True
-            except AssertionError:
-                self.value = f"<Invalid string: {other}>"
-                return False
-
-        def __repr__(self):
-            return str(self.value) if self.value else super().__repr__()
-
-    return AnyString()
 
 
 @pytest.fixture

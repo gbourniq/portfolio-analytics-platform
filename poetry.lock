@@ -807,17 +807,30 @@ files = [
 ]
 
 [package.dependencies]
+beautifulsoup4 = {version = ">=4.8.2", optional = true, markers = "extra == \"testing\""}
+cryptography = {version = "*", optional = true, markers = "extra == \"testing\""}
 dash-core-components = "2.0.0"
 dash-html-components = "2.0.0"
 dash-table = "5.0.0"
+dash-testing-stub = {version = ">=0.0.2", optional = true, markers = "extra == \"testing\""}
 Flask = ">=1.0.4,<3.1"
 importlib-metadata = "*"
+lxml = {version = ">=4.6.2", optional = true, markers = "extra == \"testing\""}
+multiprocess = {version = ">=0.70.12", optional = true, markers = "extra == \"testing\""}
 nest-asyncio = "*"
+percy = {version = ">=2.0.2", optional = true, markers = "extra == \"testing\""}
 plotly = ">=5.0.0"
-requests = "*"
+psutil = {version = ">=5.8.0", optional = true, markers = "extra == \"testing\""}
+pytest = {version = ">=6.0.2", optional = true, markers = "extra == \"testing\""}
+requests = [
+    {version = "*"},
+    {version = ">=2.21.0", extras = ["security"], optional = true, markers = "extra == \"testing\""},
+]
 retrying = "*"
+selenium = {version = ">=3.141.0,<=4.2.0", optional = true, markers = "extra == \"testing\""}
 setuptools = "*"
 typing-extensions = ">=4.1.1"
+waitress = {version = ">=1.4.4", optional = true, markers = "extra == \"testing\""}
 Werkzeug = "<3.1"
 
 [package.extras]
@@ -876,6 +889,17 @@ python-versions = "*"
 files = [
     {file = "dash_table-5.0.0-py3-none-any.whl", hash = "sha256:19036fa352bb1c11baf38068ec62d172f0515f73ca3276c79dee49b95ddc16c9"},
     {file = "dash_table-5.0.0.tar.gz", hash = "sha256:18624d693d4c8ef2ddec99a6f167593437a7ea0bf153aa20f318c170c5bc7308"},
+]
+
+[[package]]
+name = "dash-testing-stub"
+version = "0.0.2"
+description = "Package installed with dash[testing] for optional loading of pytest dash plugin."
+optional = false
+python-versions = "*"
+files = [
+    {file = "dash-testing-stub-0.0.2.tar.gz", hash = "sha256:0a98f7da9fe41dd3a37d781bc1d5672319448fdf98e47fd867aff2123171a357"},
+    {file = "dash_testing_stub-0.0.2-py3-none-any.whl", hash = "sha256:a44d530a77e1ede9c6528be4b5951f34c6109b419a09f2691422375ffa7d09de"},
 ]
 
 [[package]]
@@ -2453,6 +2477,34 @@ files = [
 ]
 
 [[package]]
+name = "multiprocess"
+version = "0.70.17"
+description = "better multiprocessing and multithreading in Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "multiprocess-0.70.17-pp310-pypy310_pp73-macosx_10_15_x86_64.whl", hash = "sha256:7ddb24e5bcdb64e90ec5543a1f05a39463068b6d3b804aa3f2a4e16ec28562d6"},
+    {file = "multiprocess-0.70.17-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:d729f55198a3579f6879766a6d9b72b42d4b320c0dcb7844afb774d75b573c62"},
+    {file = "multiprocess-0.70.17-pp310-pypy310_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:c2c82d0375baed8d8dd0d8c38eb87c5ae9c471f8e384ad203a36f095ee860f67"},
+    {file = "multiprocess-0.70.17-pp38-pypy38_pp73-macosx_10_9_arm64.whl", hash = "sha256:a22a6b1a482b80eab53078418bb0f7025e4f7d93cc8e1f36481477a023884861"},
+    {file = "multiprocess-0.70.17-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:349525099a0c9ac5936f0488b5ee73199098dac3ac899d81d326d238f9fd3ccd"},
+    {file = "multiprocess-0.70.17-pp38-pypy38_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:27b8409c02b5dd89d336107c101dfbd1530a2cd4fd425fc27dcb7adb6e0b47bf"},
+    {file = "multiprocess-0.70.17-pp39-pypy39_pp73-macosx_10_13_arm64.whl", hash = "sha256:2ea0939b0f4760a16a548942c65c76ff5afd81fbf1083c56ae75e21faf92e426"},
+    {file = "multiprocess-0.70.17-pp39-pypy39_pp73-macosx_10_13_x86_64.whl", hash = "sha256:2b12e081df87ab755190e227341b2c3b17ee6587e9c82fecddcbe6aa812cd7f7"},
+    {file = "multiprocess-0.70.17-pp39-pypy39_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:a0f01cd9d079af7a8296f521dc03859d1a414d14c1e2b6e676ef789333421c95"},
+    {file = "multiprocess-0.70.17-py310-none-any.whl", hash = "sha256:38357ca266b51a2e22841b755d9a91e4bb7b937979a54d411677111716c32744"},
+    {file = "multiprocess-0.70.17-py311-none-any.whl", hash = "sha256:2884701445d0177aec5bd5f6ee0df296773e4fb65b11903b94c613fb46cfb7d1"},
+    {file = "multiprocess-0.70.17-py312-none-any.whl", hash = "sha256:2818af14c52446b9617d1b0755fa70ca2f77c28b25ed97bdaa2c69a22c47b46c"},
+    {file = "multiprocess-0.70.17-py313-none-any.whl", hash = "sha256:20c28ca19079a6c879258103a6d60b94d4ffe2d9da07dda93fb1c8bc6243f522"},
+    {file = "multiprocess-0.70.17-py38-none-any.whl", hash = "sha256:1d52f068357acd1e5bbc670b273ef8f81d57863235d9fbf9314751886e141968"},
+    {file = "multiprocess-0.70.17-py39-none-any.whl", hash = "sha256:c3feb874ba574fbccfb335980020c1ac631fbf2a3f7bee4e2042ede62558a021"},
+    {file = "multiprocess-0.70.17.tar.gz", hash = "sha256:4ae2f11a3416809ebc9a48abfc8b14ecce0652a0944731a1493a3c1ba44ff57a"},
+]
+
+[package.dependencies]
+dill = ">=0.3.9"
+
+[[package]]
 name = "multitasking"
 version = "0.0.11"
 description = "Non-blocking Python methods using decorators"
@@ -2934,6 +2986,20 @@ python-versions = "*"
 files = [
     {file = "peewee-3.17.8.tar.gz", hash = "sha256:ce1d05db3438830b989a1b9d0d0aa4e7f6134d5f6fd57686eeaa26a3e6485a8c"},
 ]
+
+[[package]]
+name = "percy"
+version = "2.0.2"
+description = "Python client library for visual regression testing with Percy (https://percy.io)."
+optional = false
+python-versions = "*"
+files = [
+    {file = "percy-2.0.2-py2.py3-none-any.whl", hash = "sha256:c1647b768810e9453220a7721a5d52cec560dee913d13c1e29b713703f4f223e"},
+    {file = "percy-2.0.2.tar.gz", hash = "sha256:6238612dc401fa5c221c0ad7738f7ea43e48fe2695f6423e785ee2bc940f021d"},
+]
+
+[package.dependencies]
+requests = ">=2.14.0"
 
 [[package]]
 name = "pexpect"
@@ -4109,6 +4175,20 @@ cryptography = ">=2.0"
 jeepney = ">=0.6"
 
 [[package]]
+name = "selenium"
+version = "3.141.0"
+description = "Python bindings for Selenium"
+optional = false
+python-versions = "*"
+files = [
+    {file = "selenium-3.141.0-py2.py3-none-any.whl", hash = "sha256:2d7131d7bc5a5b99a2d9b04aaf2612c411b03b8ca1b1ee8d3de5845a9be2cb3c"},
+    {file = "selenium-3.141.0.tar.gz", hash = "sha256:deaf32b60ad91a4611b98d8002757f29e6f2c2d5fcaf202e1c9ad06d6772300d"},
+]
+
+[package.dependencies]
+urllib3 = "*"
+
+[[package]]
 name = "semver"
 version = "2.13.0"
 description = "Python helper for Semantic Versioning (http://semver.org/)"
@@ -4540,6 +4620,21 @@ typing-extensions = {version = ">=4.0", markers = "python_version < \"3.11\""}
 standard = ["colorama (>=0.4)", "httptools (>=0.6.3)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.14.0,!=0.15.0,!=0.15.1)", "watchfiles (>=0.13)", "websockets (>=10.4)"]
 
 [[package]]
+name = "waitress"
+version = "3.0.2"
+description = "Waitress WSGI server"
+optional = false
+python-versions = ">=3.9.0"
+files = [
+    {file = "waitress-3.0.2-py3-none-any.whl", hash = "sha256:c56d67fd6e87c2ee598b76abdd4e96cfad1f24cacdea5078d382b1f9d7b5ed2e"},
+    {file = "waitress-3.0.2.tar.gz", hash = "sha256:682aaaf2af0c44ada4abfb70ded36393f0e307f4ab9456a215ce0020baefc31f"},
+]
+
+[package.extras]
+docs = ["Sphinx (>=1.8.1)", "docutils", "pylons-sphinx-themes (>=1.0.9)"]
+testing = ["coverage (>=7.6.0)", "pytest", "pytest-cov"]
+
+[[package]]
 name = "wcwidth"
 version = "0.2.13"
 description = "Measures the displayed width of unicode strings in a terminal"
@@ -4680,4 +4775,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "c05eb09ccee5e145564a85f6887e5514eedc847194656c151d4f2d6bb98ed7ce"
+content-hash = "de6e92d0a846208f3c18d271c800f499c4bbc3c38ea10b729154891279e6e3e2"

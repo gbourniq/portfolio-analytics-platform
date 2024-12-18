@@ -23,9 +23,6 @@ fmt:
 	python3.10 -m black --line-length 89 --preview --enable-unstable-feature=string_processing $(codebase) $(tests_dir)
 	python3.10 -m ruff check --fix $(codebase) $(tests_dir)
 
-
-# Testing
-
 lint:
 	python3.10 -m autoflake --check --quiet --recursive $(codebase)
 	python3.10 -m isort --profile black --line-length 89 --check-only $(codebase)
@@ -35,42 +32,40 @@ lint:
 	python3.10 -m flake8 --max-line-length 89 --max-doc-length 89 $(codebase)
 	python3.10 -m pylint --fail-under=9.9 $(codebase)
 
-test:
-	python3.10 -m pytest --cov=$(codebase) --cov-report html --cov-report xml
-
-test-coverage: test
-	cd htmlcov && python3.10 -m http.server
-
 clean:
 	find . -type f \( -name "*.pyc" -o -name ".DS_Store" -o -name "coverage.xml" \) -delete
 	rm -rf $(cache_dirs)
 
 
-# Build
+# Unit Testing
+
+test:
+	python3.10 -m pytest --cov=$(codebase) -m "not integration" --cov-report html --cov-report xml
+
+test-coverage: test
+	cd htmlcov && python3.10 -m http.server
+
+
+# Integration Testing
 
 up:
 	UID=$$(id -u) GID=$$(id -g) docker compose up -d --build
 	@echo "Waiting for services to be healthy..."
-	@for i in $$(seq 1 30); do \
-		if docker compose ps api | grep -q "healthy" && \
-			docker compose ps dashboard | grep -q "healthy"; then \
-			exit 0; \
+	@end_time=$$(( $$(date +%s) + 60 )); \
+	while [ $$(date +%s) -lt $$end_time ]; do \
+		if curl -s http://localhost:8000/health > /dev/null; then \
+			echo "Services are healthy!" && exit 0; \
 		fi; \
-		sleep 2; \
+		echo "Waiting for services to become healthy..."; \
+		sleep 1; \
 	done; \
-	if [ $$? -ne 0 ]; then \
-		@echo "ERROR: Services failed to become healthy after 60 seconds" && \
-		docker compose logs && docker compose down && exit 1; \
-	fi
-	@echo "Services are healthy!"
+	echo "ERROR: Services failed to become healthy after 60 seconds" && \
+	docker compose logs && docker compose down && exit 1
+
+integration-test:
+	@echo "Running quick integration tests..."
+	pytest tests/integration -v -m integration
+	@echo "Tests passed successfully"
 
 down:
 	docker compose down
-
-build:
-	@echo Checking valid docker build...
-	make up
-	@echo "Running quick integration tests..."
-	# Add your actual test commands here
-	@echo "Tests passed successfully"
-	make down
