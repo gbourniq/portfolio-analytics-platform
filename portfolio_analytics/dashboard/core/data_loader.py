@@ -16,6 +16,7 @@ from portfolio_analytics.common.utils.instruments import Currency
 from portfolio_analytics.common.utils.logging_config import setup_logger
 from portfolio_analytics.dashboard.utils.cache_utils import generate_cache_key
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
+    DataValidationError,
     MetricsCalculationError,
     MissingTickersException,
 )
@@ -33,69 +34,70 @@ def validate_and_load(
     Returns:
         Tuple of (positions_df, prices_df, fx_df)
     """
-    try:
-        # Load portfolio
-        portfolio = read_portfolio_file(
-            content=holdings_path.read_bytes(), file_extension=holdings_path.suffix
+    # Load portfolio
+    portfolio = read_portfolio_file(
+        content=holdings_path.read_bytes(), file_extension=holdings_path.suffix
+    )
+    portfolio["Date"] = pd.to_datetime(portfolio["Date"]).dt.date
+
+    # Reshape portfolio
+    positions_df = portfolio.melt(
+        id_vars="Date", var_name="Ticker", value_name="Positions"
+    )
+    positions_df.set_index(["Date", "Ticker"], inplace=True)
+    positions_df.sort_index(inplace=True)
+
+    # Get portfolio metadata
+    portfolio_tickers = positions_df.index.get_level_values("Ticker").unique().tolist()
+    date_range = (portfolio.Date.min(), portfolio.Date.max())
+
+    # Validate price and fx data date coverage
+    error_messages = []
+
+    price_dates = pd.read_parquet(prices_path, columns=[]).index.get_level_values("Date")
+    if date_range[0] < price_dates.min() or date_range[1] > price_dates.max():
+        error_messages.append(
+            f"Price data coverage: [{price_dates.min()} - {price_dates.max()}]"
         )
-        portfolio["Date"] = pd.to_datetime(portfolio["Date"]).dt.date
 
-        # Reshape portfolio
-        positions_df = portfolio.melt(
-            id_vars="Date", var_name="Ticker", value_name="Positions"
+    fx_dates = pd.read_parquet(fx_path, columns=[]).index.get_level_values("Date")
+    if date_range[0] < fx_dates.min() or date_range[1] > fx_dates.max():
+        error_messages.append(f"FX data coverage: [{fx_dates.min()} - {fx_dates.max()}]")
+
+    if error_messages:
+        raise DataValidationError(
+            f"Portfolio date range [{date_range[0]} - {date_range[1]}] "
+            f"not fully covered by market data: {', '.join(error_messages)}"
         )
-        positions_df.set_index(["Date", "Ticker"], inplace=True)
-        positions_df.sort_index(inplace=True)
 
-        # Get portfolio metadata
-        portfolio_tickers = (
-            positions_df.index.get_level_values("Ticker").unique().tolist()
-        )
-        date_range = (portfolio.Date.min(), portfolio.Date.max())
+    # Load and filter price data with date filters for efficiency
+    filters = [
+        ("Date", ">=", date_range[0]),
+        ("Date", "<=", date_range[1]),
+    ]
+    prices_df = pd.read_parquet(prices_path, filters=filters)
+    fx_df = pd.read_parquet(fx_path, filters=filters)
 
-        # Load and filter price data with date filters for efficiency
-        filters = [
-            ("Date", ">=", date_range[0]),
-            ("Date", "<=", date_range[1]),
-        ]
-        prices_df = pd.read_parquet(prices_path, filters=filters)
+    # Validate tickers
+    available_tickers = prices_df.index.get_level_values("Ticker").unique()
+    missing_tickers = [t for t in portfolio_tickers if t not in available_tickers]
+    if missing_tickers:
+        raise MissingTickersException(missing_tickers, list(available_tickers))
 
-        # Only load index structure for validation
-        fx_dates = pd.read_parquet(fx_path, columns=[]).index.get_level_values("Date")
-        if date_range[0] < fx_dates.min() or date_range[1] > fx_dates.max():
-            raise MetricsCalculationError(
-                f"Portfolio date range [{date_range[0]} - {date_range[1]}] not fully"
-                f" covered by FX data coverage [{fx_dates.min()} - {fx_dates.max()}]"
-            )
+    # Filter prices to portfolio date range and tickers
+    prices_df = prices_df[
+        (prices_df.index.get_level_values("Date") >= date_range[0])
+        & (prices_df.index.get_level_values("Date") <= date_range[1])
+        & (prices_df.index.get_level_values("Ticker").isin(portfolio_tickers))
+    ]
 
-        # Load full FX data only after validation
-        fx_df = pd.read_parquet(fx_path, filters=filters)
+    # Filter FX data to portfolio date range
+    fx_df = fx_df[
+        (fx_df.index.get_level_values("Date") >= date_range[0])
+        & (fx_df.index.get_level_values("Date") <= date_range[1])
+    ]
 
-        # Validate tickers
-        available_tickers = prices_df.index.get_level_values("Ticker").unique()
-        missing_tickers = [t for t in portfolio_tickers if t not in available_tickers]
-        if missing_tickers:
-            raise MissingTickersException(missing_tickers, list(available_tickers))
-
-        # Filter prices to portfolio date range and tickers
-        prices_df = prices_df[
-            (prices_df.index.get_level_values("Date") >= date_range[0])
-            & (prices_df.index.get_level_values("Date") <= date_range[1])
-            & (prices_df.index.get_level_values("Ticker").isin(portfolio_tickers))
-        ]
-
-        # Filter FX data to portfolio date range
-        fx_df = fx_df[
-            (fx_df.index.get_level_values("Date") >= date_range[0])
-            & (fx_df.index.get_level_values("Date") <= date_range[1])
-        ]
-
-        return positions_df, prices_df, fx_df
-
-    except MissingTickersException as e:
-        raise e
-    except Exception as e:
-        raise MetricsCalculationError(f"Error loading data: {str(e)}") from e
+    return positions_df, prices_df, fx_df
 
 
 def prepare_data(
