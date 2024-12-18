@@ -178,7 +178,7 @@ class TestValidateAndLoad:
             validate_and_load(holdings_path, prices_path, fx_path)
 
         assert "Portfolio date range" in str(exc_info.value)
-        assert "not fully covered by FX data coverage" in str(exc_info.value)
+        assert "not fully covered by market data" in str(exc_info.value)
 
 
 class TestPrepareData:

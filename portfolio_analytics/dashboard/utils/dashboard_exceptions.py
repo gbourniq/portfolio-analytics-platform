@@ -10,6 +10,10 @@ class MetricsCalculationError(Exception):
     """Base exception for performance calculation errors."""
 
 
+class DataValidationError(MetricsCalculationError):
+    """Base exception for data validation errors."""
+
+
 class MissingTickersException(MetricsCalculationError):
     """Exception raised when tickers are missing from price data."""
 
