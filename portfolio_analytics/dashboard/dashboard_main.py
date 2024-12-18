@@ -238,15 +238,17 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
     )
 
     # Filter data between start and end dates
-    prepared_data = prepared_data[
+    filtered_prepared_data = prepared_data[
         (prepared_data.index.get_level_values("Date") >= start_date)
         & (prepared_data.index.get_level_values("Date") <= end_date)
     ]
 
+    filtered_pnl_expanded_df = calculate_pnl_expanded(filtered_prepared_data)
     pnl_expanded_df = calculate_pnl_expanded(prepared_data)
 
     # Calculate PnL and get date ranges
     pnl_df = calculate_daily_pnl(pnl_expanded_df)
+    filtered_pnl_df = calculate_daily_pnl(filtered_pnl_expanded_df)
 
     # Handle button styles
     button_styles = _handle_button_styles(ctx, date_picker_style, trigger_source)
@@ -259,11 +261,11 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
     fig = create_pnl_figure(df_plot)
 
     # Calculate stats and add drawdown indicators
-    stats = calculate_stats(pnl_df)
+    stats = calculate_stats(filtered_pnl_df)
     add_drawdown_indicators(fig, stats, start_date, end_date)
 
     # Get winners and losers
-    winners, losers = get_winners_and_losers(pnl_expanded_df)
+    winners, losers = get_winners_and_losers(filtered_pnl_expanded_df)
 
     # Create tables
     winners_table = create_performance_table(
