@@ -46,7 +46,7 @@ test-coverage: test
 	cd htmlcov && python3.10 -m http.server
 
 
-# Integration Testing
+# Docker
 
 up:
 	UID=$$(id -u) GID=$$(id -g) docker compose up -d --build
@@ -62,10 +62,15 @@ up:
 	echo "ERROR: Services failed to become healthy after 60 seconds" && \
 	docker compose logs && docker compose down && exit 1
 
+down:
+	docker compose down
+
+build: up down
+
+
+# Integration Testing
+
 integration-test:
 	@echo "Running quick integration tests..."
 	pytest tests/integration -v -m integration
 	@echo "Tests passed successfully"
-
-down:
-	docker compose down
