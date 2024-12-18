@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.12 (2024-12-18)
+
+### Fix
+
+* Fix daily pnl calculation ([#12](https://github.com/gbourniq/portfolio-analytics/issues/12)) ([`a820b69`](https://github.com/gbourniq/portfolio-analytics/commit/a820b6984171d465aeb9f148076c85ea311ab5d5))
+
 ## v0.1.11 (2024-12-18)
 
 
