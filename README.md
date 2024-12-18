@@ -35,7 +35,7 @@ A comprehensive portfolio management solution consisting of two main components:
 ### Quick Start with Docker
 
 ```bash
-make up
+docker-compose up
 ```
 
 ### Local Development
