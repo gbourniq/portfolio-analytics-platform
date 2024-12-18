@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.15 (2024-12-18)
+
+### Fix
+
+* Error message showing wrong fx data coverage ([#16](https://github.com/gbourniq/portfolio-analytics/issues/16)) ([`fba9c8b`](https://github.com/gbourniq/portfolio-analytics/commit/fba9c8bacd7d8be74031df46e517875ce381f4ca))
+
 ## v0.1.14 (2024-12-18)
 
 ### Documentation
