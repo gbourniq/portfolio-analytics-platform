@@ -12,6 +12,7 @@ from portfolio_analytics.dashboard.core.data_loader import (
     validate_and_load,
 )
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
+    MetricsCalculationError,
     MissingTickersException,
 )
 
@@ -159,6 +160,51 @@ class TestValidateAndLoad:
         # When/Then
         with pytest.raises(MissingTickersException):
             validate_and_load(holdings_path, prices_path, fx_path)
+
+    def test_fx_date_range_validation(
+        self, tmp_path, monkeypatch, sample_portfolio_df, sample_prices_df, sample_fx_df
+    ):
+        """Tests error handling when portfolio dates are not fully covered by FX data."""
+        # Given
+        # Create portfolio with dates outside FX coverage
+        sample_portfolio_df["Date"] = (
+            pd.Series(["2023-12-31", "2024-01-02"]).pipe(pd.to_datetime).dt.date
+        )
+
+        # Convert MultiIndex dates to datetime.date for prices_df
+        dates = pd.to_datetime(sample_prices_df.index.get_level_values("Date")).date
+        tickers = sample_prices_df.index.get_level_values("Ticker")
+        new_index = pd.MultiIndex.from_arrays([dates, tickers], names=["Date", "Ticker"])
+        sample_prices_df.index = new_index
+
+        # Convert MultiIndex dates to datetime.date for fx_df
+        dates = pd.to_datetime(sample_fx_df.index.get_level_values("Date")).date
+        tickers = sample_fx_df.index.get_level_values("Ticker")
+        new_index = pd.MultiIndex.from_arrays([dates, tickers], names=["Date", "Ticker"])
+        sample_fx_df.index = new_index
+
+        # Save files
+        holdings_path = tmp_path / "holdings.csv"
+        sample_portfolio_df.to_csv(holdings_path)
+        prices_path = tmp_path / "prices.parquet"
+        sample_prices_df.to_parquet(prices_path)
+        fx_path = tmp_path / "fx.parquet"
+        sample_fx_df.to_parquet(fx_path)
+
+        def mock_read_portfolio(*args, **kwargs):
+            return sample_portfolio_df
+
+        monkeypatch.setattr(
+            "portfolio_analytics.dashboard.core.data_loader.read_portfolio_file",
+            mock_read_portfolio,
+        )
+
+        # When/Then
+        with pytest.raises(MetricsCalculationError) as exc_info:
+            validate_and_load(holdings_path, prices_path, fx_path)
+
+        assert "Portfolio date range" in str(exc_info.value)
+        assert "not fully covered by FX data coverage" in str(exc_info.value)
 
 
 class TestPrepareData:
