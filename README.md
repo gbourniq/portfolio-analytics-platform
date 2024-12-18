@@ -36,10 +36,10 @@ A comprehensive portfolio management solution consisting of two main components:
 
 ```bash
 # For Docker Compose V2
-docker compose up
+docker compose up -d --build
 
 # For Docker Compose V1
-docker-compose up
+docker-compose up -d --build
 ```
 
 ### Local Development
@@ -47,7 +47,7 @@ docker-compose up
 1. Install dependencies:
 
 ```bash
-make install-deps
+python3.10 -m pip install -e . -r requirements.txt
 ```
 
 2. Start services:
