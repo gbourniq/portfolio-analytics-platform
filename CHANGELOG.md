@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.16 (2024-12-18)
+
+### Feature
+
+* Improve data coverage validation before calculating pnl ([#17](https://github.com/gbourniq/portfolio-analytics/issues/17)) ([`702b128`](https://github.com/gbourniq/portfolio-analytics/commit/702b12870945d5e0e57e780f39725faf5f4cf242))
+
 ## v0.1.15 (2024-12-18)
 
 ### Fix
