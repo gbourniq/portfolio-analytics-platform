@@ -44,6 +44,12 @@ try:
     # Calculate stats with currency conversion
     stats = calculate_stats(pnl_df)
 
+    # Check if the sum of PnL per ticker matches the period PnL
+    pnl_per_ticker = pnl_expanded_df.groupby("Ticker")["PnL"].last()
+    assert pnl_per_ticker.sum() == stats.period_pnl, (
+        "PnL per ticker does not match period PnL indicating a bug in the calculation"
+    )
+
     log.info(pnl_df.head())
     log.info(f"Analysis complete. Stats:\n{stats}")
 

@@ -73,18 +73,28 @@ def calculate_pnl_expanded(
     """
     Filter raw dataframe based on dates and tickers, then calculate PnL raw values.
     """
-    df_sorted = raw_df.copy().reset_index()
+    df = raw_df.copy().reset_index()
 
     # Calculate cumulative cash flows and PnL per ticker
-    _validate_date_range(df_sorted, start_date, end_date)
-    df_sorted = _filter_dataframe(df_sorted, start_date, end_date, tickers)
+    _validate_date_range(df, start_date, end_date)
+    df = _filter_dataframe(df, start_date, end_date, tickers)
 
-    df_sorted["CashFlowCumSum"] = df_sorted.groupby("Ticker")["CashFlow"].cumsum()
-    df_sorted["PnL"] = df_sorted.apply(
+    # TODO: Refactor data storage and caching mechanism.
+    # Found a bug where we now need to reset all positions at t0 when filtering the
+    # portfolio analysis on different dates. This requires re-calculating Trades,
+    # PortfolioValues and CashFlow here, and defeat the purpose of having these
+    # calculation cached upstream.
+    df.loc[df.groupby("Ticker").head(1).index, "Positions"] = 0
+    df["Trades"] = df.groupby("Ticker")["Positions"].diff()
+    df["PortfolioValues"] = df["Positions"] * df["Mid"]
+    df["CashFlow"] = (df["Trades"] * df["Mid"]).apply(lambda x: -x if x else 0)
+
+    df["CashFlowCumSum"] = df.groupby("Ticker")["CashFlow"].cumsum()
+    df["PnL"] = df.apply(
         lambda row: row["PortfolioValues"] + row["CashFlowCumSum"], axis=1
     )
 
-    return df_sorted
+    return df
 
 
 def calculate_daily_pnl(pnl_expanded: pd.DataFrame) -> pd.DataFrame:
