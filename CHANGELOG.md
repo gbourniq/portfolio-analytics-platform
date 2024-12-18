@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.10 (2024-12-18)
+
+### Documentation
+
+* Update readme ([`7919ba1`](https://github.com/gbourniq/portfolio-analytics/commit/7919ba17bda78d5acbe843d9414b065301d0c72b))
+
 ## v0.1.9 (2024-12-18)
 
 
