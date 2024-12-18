@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.13 (2024-12-18)
+
+### Fix
+
+* Quick fix for the date filtered png graph ([#13](https://github.com/gbourniq/portfolio-analytics/issues/13)) ([`37381e6`](https://github.com/gbourniq/portfolio-analytics/commit/37381e687b2262bdc118b3555b6a260751e9a8cd))
+
 ## v0.1.12 (2024-12-18)
 
 ### Fix
