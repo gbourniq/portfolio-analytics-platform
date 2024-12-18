@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "portfolio_analytics"
-version = "0.1.13"
+version = "0.1.14"
 description = "A Python project to analyse a portfolio given positions and market data."
 authors = ["Guillaume Bournique <guillaume.bournique@gmail.com>"]
 readme = "README.md"

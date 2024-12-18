@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.14 (2024-12-18)
+
+### Documentation
+
+* Update readme ([#14](https://github.com/gbourniq/portfolio-analytics/issues/14)) ([`89c8410`](https://github.com/gbourniq/portfolio-analytics/commit/89c8410279b065855f52c3aa735479c8d80110a5))
+
 ## v0.1.13 (2024-12-18)
 
 ### Fix
