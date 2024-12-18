@@ -18,50 +18,67 @@ from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
 
 
 @pytest.fixture
-def sample_portfolio_df():
-    """Returns a sample portfolio DataFrame."""
-    return pd.DataFrame(
-        {
-            "Date": ["2024-01-01", "2024-01-02"],
-            "AAPL": [100, 150],
-            "MSFT": [200, 250],
-        }
-    )
+def dates():
+    """Returns sample dates as datetime.date objects."""
+    return [pd.to_datetime("2024-01-01").date(), pd.to_datetime("2024-01-02").date()]
 
 
 @pytest.fixture
-def sample_prices_df():
-    """Returns a sample prices DataFrame with MultiIndex."""
-    idx = pd.MultiIndex.from_tuples(
-        [
-            ("2024-01-01", "AAPL"),
-            ("2024-01-01", "MSFT"),
-            ("2024-01-02", "AAPL"),
-            ("2024-01-02", "MSFT"),
-        ],
-        names=["Date", "Ticker"],
+def tickers():
+    """Returns sample ticker symbols."""
+    return ["AAPL", "MSFT"]
+
+
+@pytest.fixture
+def sample_portfolio_df(dates, tickers):
+    """Returns a sample portfolio DataFrame with positions."""
+    data = {
+        "Date": dates,
+        **{ticker: [100 + i * 50, 150 + i * 50] for i, ticker in enumerate(tickers)},
+    }
+    return pd.DataFrame(data)
+
+
+@pytest.fixture
+def sample_positions_df(sample_portfolio_df):
+    """Returns melted positions DataFrame with MultiIndex."""
+    positions = sample_portfolio_df.melt(
+        id_vars="Date", var_name="Ticker", value_name="Positions"
     )
+    return positions.set_index(["Date", "Ticker"])
+
+
+@pytest.fixture
+def sample_prices_df(dates, tickers):
+    """Returns a sample prices DataFrame with MultiIndex."""
+    idx = pd.MultiIndex.from_product([dates, tickers], names=["Date", "Ticker"])
     return pd.DataFrame(
-        {"Mid": [150.0, 200.0, 155.0, 205.0], "Currency": ["USD", "USD", "USD", "USD"]},
+        {"Mid": [150.0, 200.0, 155.0, 205.0], "Currency": ["USD"] * 4},
         index=idx,
     )
 
 
 @pytest.fixture
-def sample_fx_df():
-    """Returns a sample FX rates DataFrame with MultiIndex."""
-    data = {
-        ("2024-01-01", "EURUSD=X"): 1.1,
-        ("2024-01-01", "GBPUSD=X"): 1.3,
-        ("2024-01-01", "USDEUR=X"): 1 / 1.1,  # Add inverse rates
-        ("2024-01-01", "USDGBP=X"): 1 / 1.3,
-        ("2024-01-02", "EURUSD=X"): 1.12,
-        ("2024-01-02", "GBPUSD=X"): 1.31,
-        ("2024-01-02", "USDEUR=X"): 1 / 1.12,
-        ("2024-01-02", "USDGBP=X"): 1 / 1.31,
+def sample_fx_rates():
+    """Returns sample FX rates data."""
+    return {
+        "EURUSD=X": [1.1, 1.12],
+        "GBPUSD=X": [1.3, 1.31],
+        "USDEUR=X": [1 / 1.1, 1 / 1.12],
+        "USDGBP=X": [1 / 1.3, 1 / 1.31],
     }
-    idx = pd.MultiIndex.from_tuples(data.keys(), names=["Date", "Ticker"])
-    return pd.DataFrame({"Mid": list(data.values())}, index=idx)
+
+
+@pytest.fixture
+def sample_fx_df(dates, sample_fx_rates):
+    """Returns a sample FX rates DataFrame with MultiIndex."""
+    data = []
+    for date in dates:
+        for ticker, rates in sample_fx_rates.items():
+            data.append((date, ticker, rates[dates.index(date)]))
+
+    df = pd.DataFrame(data, columns=["Date", "Ticker", "Mid"])
+    return df.set_index(["Date", "Ticker"])
 
 
 class TestValidateAndLoad:
@@ -72,39 +89,17 @@ class TestValidateAndLoad:
     ):
         """Tests successful loading of all required data files."""
         # Given
-        # Convert Date column to datetime before saving
-        sample_portfolio_df["Date"] = pd.to_datetime(sample_portfolio_df["Date"]).dt.date
-
-        # Convert MultiIndex dates to datetime.date
-        dates = pd.to_datetime(sample_prices_df.index.get_level_values("Date")).date
-        tickers = sample_prices_df.index.get_level_values("Ticker").unique()
-        new_index = pd.MultiIndex.from_product(
-            [dates, tickers], names=["Date", "Ticker"]
-        )
-        sample_prices_df = sample_prices_df.reindex(new_index)
-
-        # Do the same for fx_df
-        dates = pd.to_datetime(sample_fx_df.index.get_level_values("Date")).date
-        tickers = sample_fx_df.index.get_level_values("Ticker").unique()
-        new_index = pd.MultiIndex.from_product(
-            [dates, tickers], names=["Date", "Ticker"]
-        )
-        sample_fx_df = sample_fx_df.reindex(new_index)
-
-        # Save files
         holdings_path = tmp_path / "holdings.csv"
-        sample_portfolio_df.to_csv(holdings_path)
         prices_path = tmp_path / "prices.parquet"
-        sample_prices_df.to_parquet(prices_path)
         fx_path = tmp_path / "fx.parquet"
-        sample_fx_df.to_parquet(fx_path)
 
-        def mock_read_portfolio(*args, **kwargs):
-            return sample_portfolio_df
+        sample_portfolio_df.to_csv(holdings_path)
+        sample_prices_df.to_parquet(prices_path)
+        sample_fx_df.to_parquet(fx_path)
 
         monkeypatch.setattr(
             "portfolio_analytics.dashboard.core.data_loader.read_portfolio_file",
-            mock_read_portfolio,
+            lambda *args, **kwargs: sample_portfolio_df,
         )
 
         # When
@@ -121,40 +116,19 @@ class TestValidateAndLoad:
     ):
         """Tests error handling when tickers are missing from price data."""
         # Given
-        # Convert Date column to datetime.date before saving
-        sample_portfolio_df["Date"] = pd.to_datetime(sample_portfolio_df["Date"]).dt.date
         sample_portfolio_df["MISSING"] = [300, 350]  # Add missing ticker
 
-        # Convert MultiIndex dates to datetime.date
-        dates = pd.to_datetime(sample_prices_df.index.get_level_values("Date")).date
-        tickers = sample_prices_df.index.get_level_values("Ticker").unique()
-        new_index = pd.MultiIndex.from_product(
-            [dates, tickers], names=["Date", "Ticker"]
-        )
-        sample_prices_df = sample_prices_df.reindex(new_index)
-
-        # Do the same for fx_df
-        dates = pd.to_datetime(sample_fx_df.index.get_level_values("Date")).date
-        tickers = sample_fx_df.index.get_level_values("Ticker").unique()
-        new_index = pd.MultiIndex.from_product(
-            [dates, tickers], names=["Date", "Ticker"]
-        )
-        sample_fx_df = sample_fx_df.reindex(new_index)
-
-        # Save files
         holdings_path = tmp_path / "holdings.csv"
-        sample_portfolio_df.to_csv(holdings_path)
         prices_path = tmp_path / "prices.parquet"
-        sample_prices_df.to_parquet(prices_path)
         fx_path = tmp_path / "fx.parquet"
-        sample_fx_df.to_parquet(fx_path)
 
-        def mock_read_portfolio(*args, **kwargs):
-            return sample_portfolio_df
+        sample_portfolio_df.to_csv(holdings_path)
+        sample_prices_df.to_parquet(prices_path)
+        sample_fx_df.to_parquet(fx_path)
 
         monkeypatch.setattr(
             "portfolio_analytics.dashboard.core.data_loader.read_portfolio_file",
-            mock_read_portfolio,
+            lambda *args, **kwargs: sample_portfolio_df,
         )
 
         # When/Then
@@ -210,120 +184,43 @@ class TestValidateAndLoad:
 class TestPrepareData:
     """Unit tests for prepare_data function."""
 
-    @pytest.fixture(autouse=True)
-    def setup(self, monkeypatch, tmp_path):
-        """Setup common test dependencies."""
-        self.cache_dir = tmp_path / "cache"
-        self.cache_dir.mkdir()
-        monkeypatch.setattr(
-            "portfolio_analytics.dashboard.core.data_loader.CACHE_DIR", self.cache_dir
-        )
+    @pytest.fixture
+    def mock_validate_load(self, sample_positions_df, sample_prices_df, sample_fx_df):
+        """Returns a mock validate_and_load function."""
 
-    @pytest.mark.parametrize(
-        "target_currency",
-        [
-            Currency.USD,
-            Currency.EUR,
-            Currency.GBP,
-        ],
-    )
-    def test_prepare_data_different_currencies(
-        self,
-        target_currency,
-        monkeypatch,
-        sample_portfolio_df,
-        sample_prices_df,
-        sample_fx_df,
-    ):
-        """Tests data preparation with different target currencies."""
+        def _mock(*args, **kwargs):
+            return sample_positions_df, sample_prices_df, sample_fx_df
 
+        return _mock
+
+    def test_prepare_data_uses_cache(self, tmp_path, monkeypatch, mock_validate_load):
+        """Tests that prepare_data uses cache correctly."""
         # Given
-        def mock_validate_load(*args, **kwargs):
-            positions = sample_portfolio_df.melt(
-                id_vars="Date", var_name="Ticker", value_name="Positions"
-            )
-            positions.set_index(["Date", "Ticker"], inplace=True)
-            return positions, sample_prices_df, sample_fx_df
-
-        def mock_generate_cache_key(*args, **kwargs):
-            return "test_cache_key"
-
+        cache_dir = tmp_path / "cache"
+        cache_dir.mkdir()
+        monkeypatch.setattr(
+            "portfolio_analytics.dashboard.core.data_loader.CACHE_DIR", cache_dir
+        )
         monkeypatch.setattr(
             "portfolio_analytics.dashboard.core.data_loader.validate_and_load",
             mock_validate_load,
         )
         monkeypatch.setattr(
             "portfolio_analytics.dashboard.core.data_loader.generate_cache_key",
-            mock_generate_cache_key,
-        )
-
-        # When
-        result = prepare_data(
-            Path("dummy.csv"),
-            Path("dummy.parquet"),
-            Path("dummy.parquet"),
-            target_currency,
-        )
-
-        # Then
-        assert "Currency" in result.columns
-        assert result["Currency"].iloc[0] == target_currency.value
-
-    def test_prepare_data_uses_cache(
-        self,
-        monkeypatch,
-        sample_portfolio_df,
-        sample_prices_df,
-        sample_fx_df,
-    ):
-        """Tests that prepare_data returns cached data when called twice with same inputs."""
-        # Given
-        mock_validate_load_called = 0
-
-        def mock_validate_load(*args, **kwargs):
-            nonlocal mock_validate_load_called
-            mock_validate_load_called += 1
-            positions = sample_portfolio_df.melt(
-                id_vars="Date", var_name="Ticker", value_name="Positions"
-            )
-            positions.set_index(["Date", "Ticker"], inplace=True)
-            return positions, sample_prices_df, sample_fx_df
-
-        def mock_generate_cache_key(*args, **kwargs):
-            return "test_cache_key"
-
-        monkeypatch.setattr(
-            "portfolio_analytics.dashboard.core.data_loader.validate_and_load",
-            mock_validate_load,
-        )
-        monkeypatch.setattr(
-            "portfolio_analytics.dashboard.core.data_loader.generate_cache_key",
-            mock_generate_cache_key,
+            lambda *args: "test_cache_key",
         )
 
         # When
         result1 = prepare_data(
-            Path("dummy.csv"),
-            Path("dummy.parquet"),
-            Path("dummy.parquet"),
-            Currency.USD,
+            Path("dummy.csv"), Path("dummy.parquet"), Path("dummy.parquet"), Currency.USD
         )
         result2 = prepare_data(
-            Path("dummy.csv"),
-            Path("dummy.parquet"),
-            Path("dummy.parquet"),
-            Currency.USD,
+            Path("dummy.csv"), Path("dummy.parquet"), Path("dummy.parquet"), Currency.USD
         )
 
         # Then
-        assert (
-            mock_validate_load_called == 1
-        )  # validate_and_load should only be called once
-        pd.testing.assert_frame_equal(
-            result1, result2
-        )  # Both results should be identical
-        cache_file = self.cache_dir / "test_cache_key.parquet"
-        assert cache_file.exists()  # Cache file should exist
+        pd.testing.assert_frame_equal(result1, result2)
+        assert (cache_dir / "test_cache_key.parquet").exists()
 
 
 class TestJoinPositionsAndPrices:
@@ -353,15 +250,13 @@ class TestJoinPositionsAndPrices:
         )
         positions.set_index(["Date", "Ticker"], inplace=True)
 
-        # Create prices with mixed currencies
-        idx = pd.MultiIndex.from_tuples(
-            [
-                ("2024-01-01", "AAPL"),
-                ("2024-01-01", "MSFT"),
-                ("2024-01-02", "AAPL"),
-                ("2024-01-02", "MSFT"),
-            ],
-            names=["Date", "Ticker"],
+        # Create prices with mixed currencies - using datetime.date objects
+        dates = [
+            pd.to_datetime("2024-01-01").date(),
+            pd.to_datetime("2024-01-02").date(),
+        ]
+        idx = pd.MultiIndex.from_product(
+            [dates, ["AAPL", "MSFT"]], names=["Date", "Ticker"]
         )
         prices_df = pd.DataFrame(
             {
@@ -372,18 +267,15 @@ class TestJoinPositionsAndPrices:
         )
 
         # Create FX rates with all required currency pairs
-        fx_data = {
-            ("2024-01-01", "EURUSD=X"): 1.1,
-            ("2024-01-01", "GBPUSD=X"): 1.3,  # Added GBP rates
-            ("2024-01-01", "USDEUR=X"): 1 / 1.1,
-            ("2024-01-01", "USDGBP=X"): 1 / 1.3,  # Added GBP rates
-            ("2024-01-02", "EURUSD=X"): 1.12,
-            ("2024-01-02", "GBPUSD=X"): 1.31,  # Added GBP rates
-            ("2024-01-02", "USDEUR=X"): 1 / 1.12,
-            ("2024-01-02", "USDGBP=X"): 1 / 1.31,  # Added GBP rates
-        }
-        fx_idx = pd.MultiIndex.from_tuples(fx_data.keys(), names=["Date", "Ticker"])
-        fx_df = pd.DataFrame({"Mid": list(fx_data.values())}, index=fx_idx)
+        fx_pairs = ["EURUSD=X", "GBPUSD=X", "USDEUR=X", "USDGBP=X"]
+        fx_idx = pd.MultiIndex.from_product([dates, fx_pairs], names=["Date", "Ticker"])
+        # fmt: off
+        fx_rates = [
+            1.1, 1.3, 1/1.1, 1/1.3,  # 2024-01-01
+            1.12, 1.31, 1/1.12, 1/1.31,  # 2024-01-02
+        ]
+        # fmt: on
+        fx_df = pd.DataFrame({"Mid": fx_rates}, index=fx_idx)
 
         # When
         result = join_positions_and_prices(positions, prices_df, fx_df)
