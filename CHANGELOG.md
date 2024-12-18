@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.17 (2024-12-18)
+
+### Fix
+
+* Fix pnl computations when analysis is filtered by date ([#18](https://github.com/gbourniq/portfolio-analytics/issues/18)) ([`ac1c0e0`](https://github.com/gbourniq/portfolio-analytics/commit/ac1c0e01c95f565b92166673fd3f1341e245669f))
+
 ## v0.1.16 (2024-12-18)
 
 ### Feature
