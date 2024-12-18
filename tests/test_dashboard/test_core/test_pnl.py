@@ -23,6 +23,9 @@ def sample_df() -> pd.DataFrame:
         {
             "Date": pd.date_range("2023-01-01", "2023-01-03"),
             "Ticker": ["AAPL", "GOOGL", "AAPL"],
+            "Positions": [100, 200, 150],
+            "Trades": [100, 200, 50],
+            "Mid": [100, 200, 150],
             "PortfolioValues": [100, 200, 150],
             "CashFlow": [100, 200, 50],
         }

@@ -42,6 +42,9 @@ from portfolio_analytics.dashboard.core.stats import (
     calculate_stats,
     get_winners_and_losers,
 )
+from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
+    MetricsCalculationError,
+)
 
 # Configure logging
 log = setup_logger(__name__)
@@ -260,8 +263,10 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
     # Create figure with selected PnL type
     fig = create_pnl_figure(df_plot)
 
-    # Calculate stats and add drawdown indicators
+    # Calculate stats
     stats = calculate_stats(filtered_pnl_df)
+
+    # Add drawdown indicators
     add_drawdown_indicators(fig, stats, start_date, end_date)
 
     # Get winners and losers
@@ -274,6 +279,18 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
     losers_table = create_performance_table(
         losers, is_positive=False, currency=target_currency
     )
+
+    # Check if the sum of PnL per ticker matches the period PnL within 1% tolerance
+    pnl_per_ticker = filtered_pnl_expanded_df.groupby("Ticker")["PnL"].last()
+    pnl_per_ticker_sum = pnl_per_ticker.sum()
+    tolerance = abs(stats.period_pnl * 0.01)  # 1% tolerance
+    if not abs(pnl_per_ticker_sum - stats.period_pnl) <= tolerance:
+        raise MetricsCalculationError(
+            "PnL per ticker does not match period PnL within 1% tolerance: "
+            f"{pnl_per_ticker_sum:.2f} != {stats.period_pnl:.2f} "
+            f"(difference: {abs(pnl_per_ticker_sum - stats.period_pnl):.2f}, "
+            f"tolerance: {tolerance:.2f})"
+        )
 
     return (
         dropdown_options,
