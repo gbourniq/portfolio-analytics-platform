@@ -1,63 +1,116 @@
-"""
-Caching utilities module for the Portfolio Analytics Dashboard.
+"""Unit tests for cache utilities."""
 
-This module provides utilities for caching and retrieving processed data to
-improve dashboard performance. It implements efficient caching strategies
-using file signatures and content hashing for optimal data retrieval.
-"""
-
-import hashlib
 from pathlib import Path
+from unittest.mock import Mock
 
 import pandas as pd
+import pytest
 
 from portfolio_analytics.common.utils.instruments import Currency
-from portfolio_analytics.common.utils.logging_config import setup_logger
-
-# Configure logging
-log = setup_logger(__name__)
-
-
-def get_dataframe_hash(df: pd.DataFrame) -> str:
-    """Creates a deterministic hash of a DataFrame's contents."""
-    # Sort index and columns for consistency
-    df = df.sort_index()
-    if isinstance(df.index, pd.MultiIndex):
-        df = df.sort_index(level=list(range(df.index.nlevels)))
-
-    # Convert array values to bytes before hashing
-    hash_values = pd.util.hash_pandas_object(df, index=True).values
-    return hashlib.sha1(bytes(hash_values)).hexdigest()
+from portfolio_analytics.dashboard.utils.cache_utils import (
+    generate_cache_key,
+    get_dataframe_hash,
+    quick_file_signature,
+)
 
 
-def quick_file_signature(file_path: Path) -> str:
-    """
-    Create a quick file signature using size and mtime.
-    Much faster than computing hash, but less reliable if files are modified
-    without changing mtime.
-    """
-    stats = file_path.stat()
-    return f"{stats.st_size}_{stats.st_mtime_ns}"
+@pytest.fixture
+def sample_dataframe():
+    """Returns a sample DataFrame for testing."""
+    return pd.DataFrame({"A": [1, 2, 3], "B": ["a", "b", "c"]})
 
 
-def generate_cache_key(
-    portfolio_path: Path, equity_path: Path, fx_path: Path, target_currency: Currency
-) -> str:
-    """
-    Create a cache key based on the file signatures.
+@pytest.fixture
+def mock_file_path():
+    """Returns a mocked Path with predefined stat values."""
+    mock_path = Mock(spec=Path)
+    mock_stat = Mock()
+    mock_stat.st_size = 1000
+    mock_stat.st_mtime_ns = 1234567890
+    mock_path.stat.return_value = mock_stat
+    return mock_path
 
-    Args:
-        portfolio_path: Path to portfolio file
-        equity_path: Path to equity prices file
-        fx_path: Path to FX rates file
 
-    Returns:
-        str: SHA-1 hash to use as cache key
-    """
+class TestGetDataframeHash:
+    """Unit tests for get_dataframe_hash function."""
 
-    return hashlib.sha1(
-        f"{quick_file_signature(portfolio_path)}|"
-        f"{quick_file_signature(equity_path)}|"
-        f"{quick_file_signature(fx_path)}|"
-        f"{target_currency}".encode()
-    ).hexdigest()
+    def test_simple_dataframe_hash(self, sample_dataframe):
+        """Tests hash generation for a simple DataFrame."""
+        # Given
+        df = sample_dataframe
+
+        # When
+        result = get_dataframe_hash(df)
+
+        # Then
+        assert isinstance(result, str)
+        assert len(result) == 40  # SHA-1 hash length
+
+    @pytest.mark.parametrize("index_order", [[2, 1, 0], [1, 0, 2], [0, 2, 1]])
+    def test_hash_consistency_with_different_index_orders(
+        self, sample_dataframe, index_order
+    ):
+        """Tests if hash remains consistent regardless of index order."""
+        # Given
+        df = sample_dataframe
+        reordered_df = df.iloc[index_order]
+
+        # When
+        original_hash = get_dataframe_hash(df)
+        reordered_hash = get_dataframe_hash(reordered_df)
+
+        # Then
+        assert original_hash == reordered_hash
+
+
+class TestQuickFileSignature:
+    """Unit tests for quick_file_signature function."""
+
+    def test_file_signature_format(self, mock_file_path):
+        """Tests the format of the generated file signature."""
+        # Given
+        expected_signature = "1000_1234567890"
+
+        # When
+        result = quick_file_signature(mock_file_path)
+
+        # Then
+        assert result == expected_signature
+
+
+class TestGenerateCacheKey:
+    """Unit tests for generate_cache_key function."""
+
+    def test_cache_key_generation(self, mock_file_path):
+        """Tests generation of cache key from file paths and currency."""
+        # Given
+        portfolio_path = mock_file_path
+        equity_path = mock_file_path
+        fx_path = mock_file_path
+        target_currency = Currency.USD
+
+        # When
+        result = generate_cache_key(
+            portfolio_path, equity_path, fx_path, target_currency
+        )
+
+        # Then
+        assert isinstance(result, str)
+        assert len(result) == 40  # SHA-1 hash length
+
+    def test_different_inputs_produce_different_keys(self, mock_file_path):
+        """Tests that different inputs produce different cache keys."""
+        # Given
+        path1 = mock_file_path
+        path2 = Mock(spec=Path)
+        mock_stat2 = Mock()
+        mock_stat2.st_size = 2000  # Different size
+        mock_stat2.st_mtime_ns = 9876543210  # Different timestamp
+        path2.stat.return_value = mock_stat2
+
+        # When
+        key1 = generate_cache_key(path1, path1, path1, Currency.USD)
+        key2 = generate_cache_key(path2, path2, path2, Currency.USD)
+
+        # Then
+        assert key1 != key2

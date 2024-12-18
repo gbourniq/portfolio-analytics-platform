@@ -130,7 +130,12 @@ example_responses: dict[int | str, dict[str, Any]] = {
 async def update_equity_data(request: EquityUpdateRequest) -> EquityUpdateResponse:
     """Update equity market data for specified stock indices.
 
-    Downloads and processes equity data for the specified stock indices.
+    Downloads and processes equity data for the specified stock indices. Note that
+    equity data updates typically involve large amounts of data and processing time.
+    While this endpoint is implemented synchronously for simplicity (with a 120-second
+    timeout), in production environments it's recommended to implement this as an
+    asynchronous process with separate endpoints for 1) triggering the update process
+    and 2) checking the pipeline execution status.
 
     **Parameters:**
     * `instruments`: List of stock indices to fetch equity data for
@@ -146,6 +151,7 @@ async def update_equity_data(request: EquityUpdateRequest) -> EquityUpdateRespon
     * `HTTPException`: If the equity data update fails
         * Data download error (500)
         * Data processing error (500)
+        * Request timeout after 120 seconds (504)
     """
     try:
         # Update equity market data

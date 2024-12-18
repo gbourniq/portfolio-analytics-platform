@@ -1,43 +1,55 @@
-"""
-Custom exceptions module for the Portfolio Analytics Dashboard.
-"""
+"""Unit tests for dashboard exceptions."""
 
-from difflib import get_close_matches
-from typing import List, Sequence
+import pytest
 
-
-class MetricsCalculationError(Exception):
-    """Base exception for performance calculation errors."""
+from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
+    MissingTickersException,
+)
 
 
-class MissingTickersException(MetricsCalculationError):
-    """Exception raised when tickers are missing from price data."""
+class TestMissingTickersException:
+    """Test suite for MissingTickersException class."""
 
-    def __init__(self, missing_tickers: List[str], available_tickers: Sequence[str]):
-        self.missing_tickers = missing_tickers
-        self.available_tickers = available_tickers
+    @pytest.mark.parametrize(
+        "missing_tickers,available_tickers,expected_message",
+        [
+            (
+                ["AAPL", "GOOGL"],
+                ["MSFT", "AMZN"],
+                "The following tickers are missing from price data: AAPL, GOOGL.\n",
+            ),
+            (
+                ["APPL"],  # Misspelled AAPL
+                ["AAPL", "MSFT"],
+                (
+                    "The following tickers are missing from price data: APPL.\n\nDid you"
+                    " mean? APPL → AAPL"
+                ),
+            ),
+        ],
+    )
+    def test_missing_tickers_exception_message(
+        self, missing_tickers, available_tickers, expected_message
+    ):
+        """Test exception message formatting with and without suggestions."""
+        # Given
+        # Parameters provided by pytest.mark.parametrize
 
-        message = (
-            "The following tickers are missing from "
-            f"price data: {', '.join(missing_tickers)}.\n"
-        )
+        # When
+        exception = MissingTickersException(missing_tickers, available_tickers)
 
-        # Find suggestions for each missing ticker
-        suggestions = {}
-        for ticker in missing_tickers:
-            close_matches = get_close_matches(
-                ticker, available_tickers, n=1, cutoff=0.6
-            )
-            if close_matches:
-                suggestions[ticker] = close_matches
+        # Then
+        assert str(exception) == expected_message
 
-        # Add suggestions to the message if any were found
-        if suggestions:
-            message += "\nDid you mean? "
-            suggestion_list = [
-                f"{ticker} → {', '.join(matches)}"
-                for ticker, matches in suggestions.items()
-            ]
-            message += ", ".join(suggestion_list)
+    def test_missing_tickers_exception_attributes(self):
+        """Test exception attributes are correctly stored."""
+        # Given
+        missing_tickers = ["AAPL", "GOOGL"]
+        available_tickers = ["MSFT", "AMZN"]
 
-        super().__init__(message)
+        # When
+        exception = MissingTickersException(missing_tickers, available_tickers)
+
+        # Then
+        assert exception.missing_tickers == missing_tickers
+        assert exception.available_tickers == available_tickers

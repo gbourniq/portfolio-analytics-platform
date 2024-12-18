@@ -1,4 +1,5 @@
 codebase ?= portfolio_analytics
+tests_dir ?= tests
 cache_dirs := .pytest_cache htmlcov .coverage .mypy_cache .ruff_cache
 
 
@@ -17,10 +18,13 @@ install-deps:
 	python3.10 -m pip install -e . -r requirements.txt
 
 fmt:
-	python3.10 -m autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive $(codebase)
-	python3.10 -m isort --profile black --line-length 89 $(codebase)
-	python3.10 -m black --line-length 89 --preview --enable-unstable-feature=string_processing $(codebase)
-	python3.10 -m ruff check --fix $(codebase)
+	python3.10 -m autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive $(codebase) $(tests_dir)
+	python3.10 -m isort --profile black --line-length 89 $(codebase) $(tests_dir)
+	python3.10 -m black --line-length 89 --preview --enable-unstable-feature=string_processing $(codebase) $(tests_dir)
+	python3.10 -m ruff check --fix $(codebase) $(tests_dir)
+
+
+# Testing
 
 lint:
 	python3.10 -m autoflake --check --quiet --recursive $(codebase)
