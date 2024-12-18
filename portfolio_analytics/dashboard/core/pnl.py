@@ -81,7 +81,7 @@ def calculate_pnl_expanded(
 
     df_sorted["CashFlowCumSum"] = df_sorted.groupby("Ticker")["CashFlow"].cumsum()
     df_sorted["PnL"] = df_sorted.apply(
-        lambda row: row["PortfolioValues"] - row["CashFlowCumSum"], axis=1
+        lambda row: row["PortfolioValues"] + row["CashFlowCumSum"], axis=1
     )
 
     return df_sorted
