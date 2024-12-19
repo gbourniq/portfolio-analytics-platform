@@ -138,7 +138,9 @@ class TestCalculateDailyPnL:
         assert isinstance(daily_pnl, pd.DataFrame)
         assert len(daily_pnl) == len(sample_df["Date"].unique())
 
-    def test_calculation_error_handling(self, monkeypatch, tmp_path, sample_df: pd.DataFrame):
+    def test_calculation_error_handling(
+        self, monkeypatch, tmp_path, sample_df: pd.DataFrame
+    ):
         """Tests error handling in daily PnL calculation."""
         # Given
         monkeypatch.setattr(
