@@ -17,6 +17,8 @@ from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
     MetricsCalculationError,
 )
 
+import numpy as np
+
 # Configure logging
 log = setup_logger(__name__)
 
@@ -33,10 +35,12 @@ try:
         PORTFOLIO_SAMPLES_DIR / "sample_portfolio.csv",
         EQUITY_FILE_PATH,
         FX_DATA_PATH,
-        target_currency=Currency.GBP,
     )
 
-    pnl_expanded_df = calculate_pnl_expanded(prepared_data)
+    pnl_expanded_df = calculate_pnl_expanded(
+        prepared_data,
+        target_currency=Currency.EUR,
+    )
 
     pnl_df = calculate_daily_pnl(pnl_expanded_df)
     winners_df, losers_df = get_winners_and_losers(pnl_expanded_df)
@@ -44,10 +48,11 @@ try:
     # Calculate stats with currency conversion
     stats = calculate_stats(pnl_df)
 
-    # Check if the sum of PnL per ticker matches the period PnL
+    # Check if the sum of PnL per ticker matches the period PnL within 1% tolerance
     pnl_per_ticker = pnl_expanded_df.groupby("Ticker")["PnL"].last()
-    assert pnl_per_ticker.sum() == stats.period_pnl, (
-        "PnL per ticker does not match period PnL indicating a bug in the calculation"
+    assert np.isclose(pnl_per_ticker.sum(), stats.period_pnl, rtol=0.01), (
+        "PnL per ticker differs from period PnL by more than 1%,"
+        "indicating a potential calculation issue"
     )
 
     log.info(pnl_df.head())

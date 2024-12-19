@@ -12,7 +12,6 @@ from typing import Tuple
 import pandas as pd
 
 from portfolio_analytics.common.utils.filesystem import CACHE_DIR, read_portfolio_file
-from portfolio_analytics.common.utils.instruments import Currency
 from portfolio_analytics.common.utils.logging_config import setup_logger
 from portfolio_analytics.dashboard.utils.cache_utils import generate_cache_key
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
@@ -100,36 +99,35 @@ def validate_and_load(
     return positions_df, prices_df, fx_df
 
 
-def prepare_data(
-    portfolio_path: Path,
-    equity_path: Path,
-    fx_path: Path,
-    target_currency: Currency = Currency.USD,
-) -> pd.DataFrame:
+def prepare_data(portfolio_path: Path, equity_path: Path, fx_path: Path) -> pd.DataFrame:
     """# noqa: E501,W505  # pylint: disable=line-too-long
     Prepares and caches raw data used to calculate PnL.
-    This includes portfolio positions, trades, and FX converted
-    prices, portfolio values and cash flows.
+    This includes USD-converted prices.
 
     The data is indexed on (Date, Ticker).
 
     Returns an expanded view of the PnL in the following shape:
 
-    (Date, Ticker)      Positions  Trades EquityIndex      Mid  ... PortfolioValues  CashFlow
-    2024-10-30  QRVO            0     0.0       SP500      121  ...        0.000000       0.0
-                ROP            65     0.0       SP500      122  ...    27410.009023       0.0
-                SMCI            0     0.0       SP500      120  ...        0.000000       0.0
-                TSLA            0     0.0       SP500      121  ...        0.000000       0.0
-                UAL             0     0.0       SP500      123  ...        0.000000       0.0
+                        Positions  Trades EquityIndex Currency                  CreatedAt  USDEUR=X  USDGBP=X      MidUsd
+    Date       Ticker
+    2024-08-30  AAPL            0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.902950   0.75966  228.688398
+                ABBV            0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.902950   0.75966  193.787502
+                ALL             0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.902950   0.75966  187.209078
+                BA              0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.902950   0.75966  172.925003
+                BIIB            0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.902950   0.75966  204.365005
+    ...                       ...     ...         ...      ...                        ...       ...       ...         ...
+    2024-10-30  QRVO            0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.922655   0.76987   74.660000
+                ROP            65     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.922655   0.76987  547.744995
+                SMCI            0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.922655   0.76987   35.100000
+                TSLA            0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.922655   0.76987  259.585007
+                UAL             0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.922655   0.76987   78.744999
     """
     try:
         # Create cache directory if it doesn't exist
         CACHE_DIR.mkdir(exist_ok=True)
 
         # Generate cache key and construct cache file path
-        cache_key = generate_cache_key(
-            portfolio_path, equity_path, fx_path, target_currency
-        )
+        cache_key = generate_cache_key(portfolio_path, equity_path, fx_path)
 
         # Return cached data if it exists
         if (cache_file_path := CACHE_DIR / f"{cache_key}.parquet").exists():
@@ -141,22 +139,6 @@ def prepare_data(
         )
 
         df = join_positions_and_prices(positions_df, prices_df, fx_df)
-
-        # Calculate USD-converted values
-        df["PortfolioValues"] = df["Positions"] * df["MidUsd"]
-        df["CashFlow"] = (df["Trades"] * df["MidUsd"]).apply(lambda x: -x if x else 0)
-
-        # Convert to target currency if needed
-        if target_currency != Currency.USD:
-            fx_rates = df.groupby("Date")[f"USD{target_currency.name}=X"].first()
-            df["PortfolioValues"] *= fx_rates
-            df["CashFlow"] *= fx_rates
-
-        df["Currency"] = target_currency.value
-
-        # Drop fx columns and rename to Mid
-        df = df.drop(columns=[col for col in df.columns if col.endswith("=X")])
-        df = df.rename(columns={"MidUsd": "Mid"})
 
         log.debug(f"Prepared DataFrame: {df.head()}\n{df.tail()}")
 

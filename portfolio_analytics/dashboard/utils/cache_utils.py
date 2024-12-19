@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from portfolio_analytics.common.utils.instruments import Currency
 from portfolio_analytics.common.utils.logging_config import setup_logger
 
 # Configure logging
@@ -40,9 +39,7 @@ def quick_file_signature(file_path: Path) -> str:
     return f"{stats.st_size}_{stats.st_mtime_ns}"
 
 
-def generate_cache_key(
-    portfolio_path: Path, equity_path: Path, fx_path: Path, target_currency: Currency
-) -> str:
+def generate_cache_key(portfolio_path: Path, equity_path: Path, fx_path: Path) -> str:
     """
     Create a cache key based on the file signatures.
 
@@ -58,6 +55,5 @@ def generate_cache_key(
     return hashlib.sha1(
         f"{quick_file_signature(portfolio_path)}|"
         f"{quick_file_signature(equity_path)}|"
-        f"{quick_file_signature(fx_path)}|"
-        f"{target_currency}".encode()
+        f"{quick_file_signature(fx_path)}|".encode()
     ).hexdigest()
