@@ -55,6 +55,7 @@ ssh -i keypair_portfolio_app.pem ec2-user@ec2-54-76-62-87.eu-west-1.compute.amaz
 ```
 # Update system
 sudo yum update -y
+sudo yum install htop -y
 
 # Install make
 sudo yum install make -y
