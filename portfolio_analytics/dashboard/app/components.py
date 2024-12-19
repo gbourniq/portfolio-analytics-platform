@@ -41,7 +41,7 @@ def create_pnl_figure(df_plot):
             x=df["Date"],
             y=[0] * len(df),
             mode="lines",
-            line=dict(color="rgba(0,0,0,0)"),
+            line=dict(color="rgba(0,0,0,0.2)"),
             showlegend=False,
             hoverinfo="skip",
         )
@@ -60,8 +60,31 @@ def create_pnl_figure(df_plot):
         )
     )
 
+    # Add y-axis scaling configuration
+    y_values = df["PnL"].values
+    y_min, y_max = min(y_values), max(y_values)
+    y_range_padding = (y_max - y_min) * 0.1  # 10% padding
+
+    # Set range based purely on data values plus padding
+    y_range_min = y_min - y_range_padding
+    y_range_max = y_max + y_range_padding
+
+    # Only include 0 if the data actually crosses it
+    if y_min <= 0 <= y_max:
+        y_range_min = min(y_range_min, 0)
+        y_range_max = max(y_range_max, 0)
+
     fig.update_layout(
-        xaxis_title="", yaxis_title="", showlegend=False, hovermode="x unified"
+        xaxis_title="",
+        yaxis_title="",
+        showlegend=False,
+        hovermode="x unified",
+        yaxis=dict(
+            range=[y_range_min, y_range_max],
+            zeroline=True,
+            zerolinecolor="rgba(0,0,0,0.2)",
+            zerolinewidth=1,
+        ),
     )
 
     return fig
