@@ -10,6 +10,13 @@ services:
     # Runs container processes with host user's UID/GID to avoid permission issues
     # Files created in volumes will be owned by the host user instead of root
     user: "${UID:-1000}:${GID:-1000}"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256M
+        reservations:
+          memory: 128M
 
   dashboard:
     build:
@@ -22,3 +29,10 @@ services:
     # Runs container processes with host user's UID/GID to avoid permission issues
     # Files created in volumes will be owned by the host user instead of root
     user: "${UID:-1000}:${GID:-1000}"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.6'
+          memory: 512M
+        reservations:
+          memory: 256M

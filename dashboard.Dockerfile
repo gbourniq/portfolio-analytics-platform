@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -7,7 +7,6 @@ ENV PYTHONUNBUFFERED=1 \
 
 # Add labels
 LABEL maintainer="guillaume.bournique@gmail.com" \
-version="1.0" \
 description="Portfolio Analytics Dashboard"
 
 # Install curl for healthcheck
@@ -19,11 +18,12 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 
 # Install dependencies
-COPY portfolio_analytics/dashboard/requirements.txt ./requirements.txt
-RUN pip install -r requirements.txt
+COPY pyproject.toml ./pyproject.toml
+RUN python3.12 -m pip install poetry==1.8.5 && \
+    poetry config virtualenvs.create false && \
+    poetry install --with=dashboard
 
 # Copy source code to the container
-COPY pyproject.toml ./pyproject.toml
 COPY portfolio_analytics/common/utils portfolio_analytics/common/utils
 COPY portfolio_analytics/dashboard portfolio_analytics/dashboard
 

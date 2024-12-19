@@ -1,7 +1,7 @@
 # Portfolio Analytics
 
 [![CI/CD](https://github.com/gbourniq/portfolio-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/gbourniq/portfolio-analytics/actions/workflows/ci.yml)
-[![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Pylint Score](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/gbourniq/b149841cbef1088a8bf7671efee16734/raw/pylint.txt)](https://github.com/gbourniq/portfolio-analytics/actions)
 [![Code Coverage](https://codecov.io/gh/gbourniq/portfolio-analytics/graph/badge.svg?token=O5LIL4YV9L)](https://codecov.io/gh/gbourniq/portfolio-analytics)
@@ -55,7 +55,8 @@ make up
 1. Install dependencies:
 
 ```bash
-python3.10 -m pip install -e . -r requirements.txt
+python3.12 -m pip install poetry -U
+poetry install
 ```
 
 2. Start services:
@@ -64,6 +65,10 @@ python3.10 -m pip install -e . -r requirements.txt
 python portfolio_analytics/dashboard/dashboard_main.py
 python portfolio_analytics/api/api_main.py
 ```
+
+### CI
+
+![CI](.github/images/ci.png)
 
 ## Future Improvements
 
