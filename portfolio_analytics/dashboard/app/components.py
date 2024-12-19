@@ -152,7 +152,8 @@ def create_performance_table(df, is_positive=True, currency=Currency.USD):
                             [
                                 html.Td(row["symbol"]),
                                 html.Td(
-                                    f"{symbol}{row['pnl']:,.2f}",
+                                    f"{'-' if row['pnl'] < 0 else ''}"
+                                    f"{symbol}{abs(row['pnl']):,.2f}",
                                     className="text-end",
                                 ),
                             ]
