@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.23 (2024-12-19)
+
+### Feature
+
+* Upgrade to python3.12 and remove requirements.txt files in favour of poetry ([`07e210b`](https://github.com/gbourniq/portfolio-analytics/commit/07e210b64ab5e1a19e4cc6d6f13d7a4aef02ca9a))
+
+### Fix
+
+* Add resource limits to containers ([`db74fc9`](https://github.com/gbourniq/portfolio-analytics/commit/db74fc931a156b272502a575832baf39847942b0))
+
 ## v0.1.22 (2024-12-19)
 
 ### Fix
