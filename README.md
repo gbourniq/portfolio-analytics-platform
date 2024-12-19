@@ -30,6 +30,18 @@ A comprehensive portfolio management solution consisting of two main components:
 - System health monitoring
 - OpenAPI 3.1 compliant
 
+### Expected input
+
+The dashboard analyzes portfolio positions across multiple stock exchanges, accepting input data (csv, xlsx, parquet) in the following format:
+
+| Date       | AAPL | ABBV | ... | SHEL.L | DHL.DE | BNP.PA |
+| ---------- | ---- | ---- | --- | ------ | ------ | ------ |
+| 2018-01-01 | 52   | 79   | ... | 104    | 165    | 90     |
+| 2018-01-02 | 122  | 95   | ... | 100    | 6      | 93     |
+| 2018-01-03 | 86   | 199  | ... | 152    | 90     | 159    |
+| ...        | ...  | ...  | ... | ...    | ...    | ...    |
+| 2024-12-19 | 133  | 105  | ... | 39     | 187    | 78     |
+
 ## Getting Started
 
 ### Quick Start with Docker

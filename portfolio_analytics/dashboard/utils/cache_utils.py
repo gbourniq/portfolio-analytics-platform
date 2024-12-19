@@ -11,13 +11,14 @@ from pathlib import Path
 
 import pandas as pd
 
+from portfolio_analytics.common.utils.instruments import Currency
 from portfolio_analytics.common.utils.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)
 
 
-def get_dataframe_hash(df: pd.DataFrame) -> str:
+def _get_dataframe_hash(df: pd.DataFrame) -> str:
     """Creates a deterministic hash of a DataFrame's contents."""
     # Sort index and columns for consistency
     df = df.sort_index()
@@ -29,7 +30,23 @@ def get_dataframe_hash(df: pd.DataFrame) -> str:
     return hashlib.sha1(bytes(hash_values)).hexdigest()
 
 
-def quick_file_signature(file_path: Path) -> str:
+def generate_cache_key_pnl(pnl_df: pd.DataFrame, currency: Currency) -> str:
+    """
+    Create a cache key based on DataFrame contents and currency.
+
+    Args:
+        df: PnL DataFrame to cache
+        currency: Target currency for calculations
+
+    Returns:
+        str: SHA-1 hash to use as cache key
+    """
+    return hashlib.sha1(
+        f"{_get_dataframe_hash(pnl_df)}|{currency.name}".encode()
+    ).hexdigest()
+
+
+def _quick_file_signature(file_path: Path) -> str:
     """
     Create a quick file signature using size and mtime.
     Much faster than computing hash, but less reliable if files are modified
@@ -39,7 +56,9 @@ def quick_file_signature(file_path: Path) -> str:
     return f"{stats.st_size}_{stats.st_mtime_ns}"
 
 
-def generate_cache_key(portfolio_path: Path, equity_path: Path, fx_path: Path) -> str:
+def generate_cache_key_prepared_data(
+    portfolio_path: Path, equity_path: Path, fx_path: Path
+) -> str:
     """
     Create a cache key based on the file signatures.
 
@@ -53,7 +72,7 @@ def generate_cache_key(portfolio_path: Path, equity_path: Path, fx_path: Path) -
     """
 
     return hashlib.sha1(
-        f"{quick_file_signature(portfolio_path)}|"
-        f"{quick_file_signature(equity_path)}|"
-        f"{quick_file_signature(fx_path)}|".encode()
+        f"{_quick_file_signature(portfolio_path)}|"
+        f"{_quick_file_signature(equity_path)}|"
+        f"{_quick_file_signature(fx_path)}|".encode()
     ).hexdigest()

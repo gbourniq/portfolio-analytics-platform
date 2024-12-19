@@ -6,9 +6,9 @@ import pandas as pd
 import pytest
 
 from portfolio_analytics.dashboard.core.data_loader import (
-    join_positions_and_prices,
+    _prepare_portfolio_data_with_usd_prices,
+    _validate_and_load,
     prepare_data,
-    validate_and_load,
 )
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
     MetricsCalculationError,
@@ -102,7 +102,7 @@ class TestValidateAndLoad:
         )
 
         # When
-        positions, prices, fx = validate_and_load(holdings_path, prices_path, fx_path)
+        positions, prices, fx = _validate_and_load(holdings_path, prices_path, fx_path)
 
         # Then
         assert not positions.empty
@@ -132,7 +132,7 @@ class TestValidateAndLoad:
 
         # When/Then
         with pytest.raises(MissingTickersException):
-            validate_and_load(holdings_path, prices_path, fx_path)
+            _validate_and_load(holdings_path, prices_path, fx_path)
 
     def test_fx_date_range_validation(
         self, tmp_path, monkeypatch, sample_portfolio_df, sample_prices_df, sample_fx_df
@@ -174,7 +174,7 @@ class TestValidateAndLoad:
 
         # When/Then
         with pytest.raises(MetricsCalculationError) as exc_info:
-            validate_and_load(holdings_path, prices_path, fx_path)
+            _validate_and_load(holdings_path, prices_path, fx_path)
 
         assert "Portfolio date range" in str(exc_info.value)
         assert "not fully covered by market data" in str(exc_info.value)
@@ -201,11 +201,11 @@ class TestPrepareData:
             "portfolio_analytics.dashboard.core.data_loader.CACHE_DIR", cache_dir
         )
         monkeypatch.setattr(
-            "portfolio_analytics.dashboard.core.data_loader.validate_and_load",
+            "portfolio_analytics.dashboard.core.data_loader._validate_and_load",
             mock_validate_load,
         )
         monkeypatch.setattr(
-            "portfolio_analytics.dashboard.core.data_loader.generate_cache_key",
+            "portfolio_analytics.dashboard.core.data_loader.generate_cache_key_prepared_data",
             lambda *args: "test_cache_key",
         )
 
@@ -234,10 +234,11 @@ class TestJoinPositionsAndPrices:
         positions.set_index(["Date", "Ticker"], inplace=True)
 
         # When
-        result = join_positions_and_prices(positions, sample_prices_df, sample_fx_df)
+        result = _prepare_portfolio_data_with_usd_prices(
+            positions, sample_prices_df, sample_fx_df
+        )
 
         # Then
-        assert "Trades" in result.columns
         assert "MidUsd" in result.columns
         assert not result.empty
 
@@ -277,7 +278,7 @@ class TestJoinPositionsAndPrices:
         fx_df = pd.DataFrame({"Mid": fx_rates}, index=fx_idx)
 
         # When
-        result = join_positions_and_prices(positions, prices_df, fx_df)
+        result = _prepare_portfolio_data_with_usd_prices(positions, prices_df, fx_df)
 
         # Then
         assert "MidUsd" in result.columns

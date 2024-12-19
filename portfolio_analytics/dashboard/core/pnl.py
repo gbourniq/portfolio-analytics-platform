@@ -7,8 +7,10 @@ from typing import List, Optional
 
 import pandas as pd
 
+from portfolio_analytics.common.utils.filesystem import CACHE_DIR
 from portfolio_analytics.common.utils.instruments import Currency
 from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.dashboard.utils.cache_utils import generate_cache_key_pnl
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
     MetricsCalculationError,
 )
@@ -65,7 +67,7 @@ def _filter_dataframe(
     return filtered_df
 
 
-def calculate_pnl_expanded(
+def calculate_pnl(
     raw_df: pd.DataFrame,
     start_date: Optional[dtm.date] = None,
     end_date: Optional[dtm.date] = None,
@@ -73,8 +75,15 @@ def calculate_pnl_expanded(
     target_currency: Currency = Currency.USD,
 ):
     """
-    Filter raw dataframe based on dates and tickers, then calculate PnL raw values.
+    Filter raw dataframe based on dates and tickers, then calculate PnL values.
     """
+    # Generate cache key and construct cache file path
+    cache_key = generate_cache_key_pnl(raw_df, target_currency)
+
+    # Return cached data if it exists
+    if (cache_file_path := CACHE_DIR / f"{cache_key}.parquet").exists():
+        return pd.read_parquet(cache_file_path)
+
     df = raw_df.copy().reset_index()
 
     # Calculate cumulative cash flows and PnL per ticker
@@ -98,8 +107,11 @@ def calculate_pnl_expanded(
         df["PnL"] *= df[f"USD{target_currency.name}=X"]
     df["Currency"] = target_currency.value
 
-    # Drop fx columns and rename to Mid
-    df = df.drop(columns=[col for col in df.columns if col.endswith("=X")])
+    # Return only essential columns
+    df = df[["Date", "Ticker", "PnL", "Currency"]]
+
+    # Cache the result
+    df.to_parquet(cache_file_path)
 
     return df
 
