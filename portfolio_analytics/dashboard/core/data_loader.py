@@ -13,7 +13,9 @@ import pandas as pd
 
 from portfolio_analytics.common.utils.filesystem import CACHE_DIR, read_portfolio_file
 from portfolio_analytics.common.utils.logging_config import setup_logger
-from portfolio_analytics.dashboard.utils.cache_utils import generate_cache_key
+from portfolio_analytics.dashboard.utils.cache_utils import (
+    generate_cache_key_prepared_data,
+)
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
     DataValidationError,
     MetricsCalculationError,
@@ -24,7 +26,7 @@ from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
 log = setup_logger(__name__)
 
 
-def validate_and_load(
+def _validate_and_load(
     holdings_path: Path, prices_path: Path, fx_path: Path
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -53,13 +55,18 @@ def validate_and_load(
     # Validate price and fx data date coverage
     error_messages = []
 
-    price_dates = pd.read_parquet(prices_path, columns=[]).index.get_level_values("Date")
+    # Load the index information once for both date and ticker validation
+    price_index = pd.read_parquet(prices_path, columns=[]).index
+    price_dates = price_index.get_level_values("Date")
+    available_tickers = price_index.get_level_values("Ticker").unique()
+    fx_dates = pd.read_parquet(fx_path, columns=[]).index.get_level_values("Date")
+
+    # Date validation
     if date_range[0] < price_dates.min() or date_range[1] > price_dates.max():
         error_messages.append(
             f"Price data coverage: [{price_dates.min()} - {price_dates.max()}]"
         )
 
-    fx_dates = pd.read_parquet(fx_path, columns=[]).index.get_level_values("Date")
     if date_range[0] < fx_dates.min() or date_range[1] > fx_dates.max():
         error_messages.append(f"FX data coverage: [{fx_dates.min()} - {fx_dates.max()}]")
 
@@ -69,32 +76,19 @@ def validate_and_load(
             f"not fully covered by market data: {', '.join(error_messages)}"
         )
 
-    # Load and filter price data with date filters for efficiency
-    filters = [
-        ("Date", ">=", date_range[0]),
-        ("Date", "<=", date_range[1]),
-    ]
-    prices_df = pd.read_parquet(prices_path, filters=filters)
-    fx_df = pd.read_parquet(fx_path, filters=filters)
-
     # Validate tickers
-    available_tickers = prices_df.index.get_level_values("Ticker").unique()
     missing_tickers = [t for t in portfolio_tickers if t not in available_tickers]
     if missing_tickers:
         raise MissingTickersException(missing_tickers, list(available_tickers))
 
-    # Filter prices to portfolio date range and tickers
-    prices_df = prices_df[
-        (prices_df.index.get_level_values("Date") >= date_range[0])
-        & (prices_df.index.get_level_values("Date") <= date_range[1])
-        & (prices_df.index.get_level_values("Ticker").isin(portfolio_tickers))
+    # Load and filter price data with date and ticker filters for efficiency
+    filters = [
+        ("Date", ">=", date_range[0]),
+        ("Date", "<=", date_range[1]),
+        ("Ticker", "in", portfolio_tickers),
     ]
-
-    # Filter FX data to portfolio date range
-    fx_df = fx_df[
-        (fx_df.index.get_level_values("Date") >= date_range[0])
-        & (fx_df.index.get_level_values("Date") <= date_range[1])
-    ]
+    prices_df = pd.read_parquet(prices_path, filters=filters)
+    fx_df = pd.read_parquet(fx_path, filters=filters[:2])  # Only date filters for FX
 
     return positions_df, prices_df, fx_df
 
@@ -102,7 +96,8 @@ def validate_and_load(
 def prepare_data(portfolio_path: Path, equity_path: Path, fx_path: Path) -> pd.DataFrame:
     """# noqa: E501,W505  # pylint: disable=line-too-long
     Prepares and caches raw data used to calculate PnL.
-    This includes USD-converted prices.
+    This includes USD-converted prices for the full portfolio date range
+    as well as additional FX rates to convert the PnL to a target currency.
 
     The data is indexed on (Date, Ticker).
 
@@ -123,22 +118,21 @@ def prepare_data(portfolio_path: Path, equity_path: Path, fx_path: Path) -> pd.D
                 UAL             0     0.0       SP500      USD 2024-12-16 15:10:12.910032  0.922655   0.76987   78.744999
     """
     try:
-        # Create cache directory if it doesn't exist
-        CACHE_DIR.mkdir(exist_ok=True)
-
         # Generate cache key and construct cache file path
-        cache_key = generate_cache_key(portfolio_path, equity_path, fx_path)
+        cache_key = generate_cache_key_prepared_data(
+            portfolio_path, equity_path, fx_path
+        )
 
         # Return cached data if it exists
         if (cache_file_path := CACHE_DIR / f"{cache_key}.parquet").exists():
             return pd.read_parquet(cache_file_path)
 
         # If no cache exists or loading failed, load and prepare the data
-        positions_df, prices_df, fx_df = validate_and_load(
+        positions_df, prices_df, fx_df = _validate_and_load(
             portfolio_path, equity_path, fx_path
         )
 
-        df = join_positions_and_prices(positions_df, prices_df, fx_df)
+        df = _prepare_portfolio_data_with_usd_prices(positions_df, prices_df, fx_df)
 
         log.debug(f"Prepared DataFrame: {df.head()}\n{df.tail()}")
 
@@ -149,13 +143,13 @@ def prepare_data(portfolio_path: Path, equity_path: Path, fx_path: Path) -> pd.D
         raise MetricsCalculationError(str(e)) from e
 
 
-def join_positions_and_prices(
+def _prepare_portfolio_data_with_usd_prices(
     positions_df: pd.DataFrame, prices_df: pd.DataFrame, fx_df: pd.DataFrame
 ) -> pd.DataFrame:
     """Prepares position data with trades and joins with prices,
     and calculating USD-converted portfolio values and cash flows."""
 
-    # Prepare price data with complete date range
+    # Prepare price data with complete portfolio date range
     holdings_dates = positions_df.index.get_level_values("Date").unique()
     tickers = prices_df.index.get_level_values("Ticker").unique()
     multi_index = pd.MultiIndex.from_product(
@@ -164,21 +158,10 @@ def join_positions_and_prices(
     )
     prices_df = prices_df.reindex(multi_index).groupby("Ticker").ffill()
 
-    # Process positions
-    positions_sorted = positions_df.copy()
-    positions_sorted = positions_sorted.sort_index(level=["Date", "Ticker"])
-    positions_sorted["Trades"] = positions_sorted.groupby("Ticker")["Positions"].diff()
-
-    # Set initial trades to 0
-    first_date = positions_sorted.index.get_level_values("Date").min()
-    positions_sorted.loc[
-        positions_sorted.index.get_level_values("Date") == first_date, "Trades"
-    ] = 0.0
-
     # Join with prices
-    combined_df = positions_sorted.join(prices_df)
+    combined_df = positions_df.join(prices_df)
 
-    # Join with FX rates - only select needed columns
+    # Join with FX rates
     fx_df.reset_index(inplace=True)
     fx_pivot = fx_df.pivot(index="Date", columns="Ticker", values="Mid")[
         ["EURUSD=X", "GBPUSD=X", "USDEUR=X", "USDGBP=X"]

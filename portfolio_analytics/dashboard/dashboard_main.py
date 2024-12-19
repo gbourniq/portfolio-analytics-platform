@@ -34,10 +34,7 @@ from portfolio_analytics.dashboard.app.components import (
 )
 from portfolio_analytics.dashboard.app.layout import STYLES, create_layout
 from portfolio_analytics.dashboard.core.data_loader import prepare_data
-from portfolio_analytics.dashboard.core.pnl import (
-    calculate_daily_pnl,
-    calculate_pnl_expanded,
-)
+from portfolio_analytics.dashboard.core.pnl import calculate_daily_pnl, calculate_pnl
 from portfolio_analytics.dashboard.core.stats import (
     calculate_stats,
     get_winners_and_losers,
@@ -243,35 +240,31 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
         & (prepared_data.index.get_level_values("Date") <= end_date)
     ]
 
-    filtered_pnl_expanded_df = calculate_pnl_expanded(
+    filtered_pnl_df = calculate_pnl(
         filtered_prepared_data, target_currency=target_currency
     )
-    pnl_expanded_df = calculate_pnl_expanded(
-        prepared_data, target_currency=target_currency
-    )
+    pnl_df = calculate_pnl(prepared_data, target_currency=target_currency)
 
     # Calculate PnL and get date ranges
-    pnl_df = calculate_daily_pnl(pnl_expanded_df)
-    filtered_pnl_df = calculate_daily_pnl(filtered_pnl_expanded_df)
+    daily_pnl_df = calculate_daily_pnl(pnl_df)
+    filtered_daily_pnl_df = calculate_daily_pnl(filtered_pnl_df)
 
     # Handle button styles
     button_styles = _handle_button_styles(ctx, date_picker_style, trigger_source)
 
-    # Prepare and filter data
-    df_plot = pnl_df.reset_index()
+    # Create figure with user-selected date range data
+    df_plot = daily_pnl_df.reset_index()
     df_plot = df_plot[(df_plot["Date"] >= start_date) & (df_plot["Date"] <= end_date)]
-
-    # Create figure with selected PnL type
     fig = create_pnl_figure(df_plot)
 
     # Calculate stats
-    stats = calculate_stats(filtered_pnl_df)
+    stats = calculate_stats(filtered_daily_pnl_df)
 
     # Add drawdown indicators
     add_drawdown_indicators(fig, stats, start_date, end_date)
 
     # Get winners and losers
-    winners, losers = get_winners_and_losers(filtered_pnl_expanded_df)
+    winners, losers = get_winners_and_losers(filtered_pnl_df)
 
     # Create tables
     winners_table = create_performance_table(
@@ -282,7 +275,7 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
     )
 
     # Check if the sum of PnL per ticker matches the period PnL within 1% tolerance
-    pnl_per_ticker = filtered_pnl_expanded_df.groupby("Ticker")["PnL"].last()
+    pnl_per_ticker = filtered_pnl_df.groupby("Ticker")["PnL"].last()
     pnl_per_ticker_sum = pnl_per_ticker.sum()
     tolerance = abs(stats.period_pnl * 0.01)  # 1% tolerance
     if not abs(pnl_per_ticker_sum - stats.period_pnl) <= tolerance:

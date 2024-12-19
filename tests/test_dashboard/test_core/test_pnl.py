@@ -9,7 +9,7 @@ from portfolio_analytics.dashboard.core.pnl import (
     _filter_dataframe,
     _validate_date_range,
     calculate_daily_pnl,
-    calculate_pnl_expanded,
+    calculate_pnl,
 )
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
     MetricsCalculationError,
@@ -99,30 +99,37 @@ class TestFilterDataframe:
             _filter_dataframe(df, None, None, invalid_tickers)
 
 
-class TestCalculatePnLExpanded:
+class TestCalculatePnL:
     """Tests for expanded PnL calculation."""
 
-    def test_pnl_calculation(self, sample_df: pd.DataFrame):
+    def test_pnl_calculation(self, monkeypatch, tmp_path, sample_df: pd.DataFrame):
         """Tests basic PnL calculation."""
         # Given
         df = sample_df
+        monkeypatch.setattr(
+            "portfolio_analytics.dashboard.core.pnl.CACHE_DIR",
+            tmp_path,
+        )
 
         # When
-        result = calculate_pnl_expanded(df)
+        result = calculate_pnl(df)
 
         # Then
         assert "PnL" in result.columns
-        assert "CashFlowCumSum" in result.columns
         assert len(result) == len(df)
 
 
 class TestCalculateDailyPnL:
     """Tests for daily PnL calculation."""
 
-    def test_daily_pnl_aggregation(self, sample_df: pd.DataFrame):
+    def test_daily_pnl_aggregation(self, monkeypatch, tmp_path, sample_df: pd.DataFrame):
         """Tests aggregation of PnL values by date."""
         # Given
-        expanded_pnl = calculate_pnl_expanded(sample_df)
+        monkeypatch.setattr(
+            "portfolio_analytics.dashboard.core.pnl.CACHE_DIR",
+            tmp_path,
+        )
+        expanded_pnl = calculate_pnl(sample_df)
 
         # When
         daily_pnl = calculate_daily_pnl(expanded_pnl)
@@ -131,10 +138,15 @@ class TestCalculateDailyPnL:
         assert isinstance(daily_pnl, pd.DataFrame)
         assert len(daily_pnl) == len(sample_df["Date"].unique())
 
-    def test_calculation_error_handling(self, sample_df: pd.DataFrame):
+    def test_calculation_error_handling(self, monkeypatch, tmp_path, sample_df: pd.DataFrame):
         """Tests error handling in daily PnL calculation."""
         # Given
-        expanded_pnl = calculate_pnl_expanded(sample_df)
+        monkeypatch.setattr(
+            "portfolio_analytics.dashboard.core.pnl.CACHE_DIR",
+            tmp_path,
+        )
+
+        expanded_pnl = calculate_pnl(sample_df)
         invalid_df = expanded_pnl.drop(columns=["PnL"])
 
         # When/Then
