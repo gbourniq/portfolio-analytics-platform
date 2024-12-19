@@ -6,7 +6,6 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-from portfolio_analytics.common.utils.instruments import Currency
 from portfolio_analytics.dashboard.utils.cache_utils import (
     generate_cache_key,
     get_dataframe_hash,
@@ -87,12 +86,9 @@ class TestGenerateCacheKey:
         portfolio_path = mock_file_path
         equity_path = mock_file_path
         fx_path = mock_file_path
-        target_currency = Currency.USD
 
         # When
-        result = generate_cache_key(
-            portfolio_path, equity_path, fx_path, target_currency
-        )
+        result = generate_cache_key(portfolio_path, equity_path, fx_path)
 
         # Then
         assert isinstance(result, str)
@@ -109,8 +105,8 @@ class TestGenerateCacheKey:
         path2.stat.return_value = mock_stat2
 
         # When
-        key1 = generate_cache_key(path1, path1, path1, Currency.USD)
-        key2 = generate_cache_key(path2, path2, path2, Currency.USD)
+        key1 = generate_cache_key(path1, path1, path1)
+        key2 = generate_cache_key(path2, path2, path2)
 
         # Then
         assert key1 != key2

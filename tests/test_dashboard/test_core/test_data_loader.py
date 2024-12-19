@@ -5,7 +5,6 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from portfolio_analytics.common.utils.instruments import Currency
 from portfolio_analytics.dashboard.core.data_loader import (
     join_positions_and_prices,
     prepare_data,
@@ -212,10 +211,10 @@ class TestPrepareData:
 
         # When
         result1 = prepare_data(
-            Path("dummy.csv"), Path("dummy.parquet"), Path("dummy.parquet"), Currency.USD
+            Path("dummy.csv"), Path("dummy.parquet"), Path("dummy.parquet")
         )
         result2 = prepare_data(
-            Path("dummy.csv"), Path("dummy.parquet"), Path("dummy.parquet"), Currency.USD
+            Path("dummy.csv"), Path("dummy.parquet"), Path("dummy.parquet")
         )
 
         # Then

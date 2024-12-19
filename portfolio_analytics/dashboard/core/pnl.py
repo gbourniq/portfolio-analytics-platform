@@ -7,6 +7,7 @@ from typing import List, Optional
 
 import pandas as pd
 
+from portfolio_analytics.common.utils.instruments import Currency
 from portfolio_analytics.common.utils.logging_config import setup_logger
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
     MetricsCalculationError,
@@ -69,6 +70,7 @@ def calculate_pnl_expanded(
     start_date: Optional[dtm.date] = None,
     end_date: Optional[dtm.date] = None,
     tickers: Optional[List[str]] = None,
+    target_currency: Currency = Currency.USD,
 ):
     """
     Filter raw dataframe based on dates and tickers, then calculate PnL raw values.
@@ -79,16 +81,22 @@ def calculate_pnl_expanded(
     _validate_date_range(df, start_date, end_date)
     df = _filter_dataframe(df, start_date, end_date, tickers)
 
-    # TODO: Refactor data storage and caching mechanism.
-    # Found a bug where we now need to reset all positions at t0 when filtering the
-    # portfolio analysis on different dates. This requires re-calculating Trades,
-    # PortfolioValues and CashFlow here, and defeat the purpose of having these
-    # calculation cached upstream.
+    # Convert to target currency if needed
+    if target_currency != Currency.USD:
+        df["MidUsd"] *= df[f"USD{target_currency.name}=X"]
+    df["Currency"] = target_currency.value
+
+    # Drop fx columns and rename to Mid
+    df = df.drop(columns=[col for col in df.columns if col.endswith("=X")])
+    df = df.rename(columns={"MidUsd": "Mid"})
+
+    # Consider positions at t0 as 0
     df.loc[df.groupby("Ticker").head(1).index, "Positions"] = 0
     df["Trades"] = df.groupby("Ticker")["Positions"].diff()
     df["PortfolioValues"] = df["Positions"] * df["Mid"]
     df["CashFlow"] = (df["Trades"] * df["Mid"]).apply(lambda x: -x if x else 0)
 
+    # Calculate cumulative cash flows and PnL per ticker
     df["CashFlowCumSum"] = df.groupby("Ticker")["CashFlow"].cumsum()
     df["PnL"] = df.apply(
         lambda row: row["PortfolioValues"] + row["CashFlowCumSum"], axis=1

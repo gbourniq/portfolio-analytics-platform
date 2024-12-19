@@ -221,10 +221,7 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
     # Prepare data and handle errors
     try:
         prepared_data = prepare_data(
-            Path(portfolio_name),
-            EQUITY_FILE_PATH,
-            FX_DATA_PATH,
-            target_currency=target_currency,
+            Path(portfolio_name), EQUITY_FILE_PATH, FX_DATA_PATH
         )
     except Exception as e:  # pylint: disable=broad-except
         # Note: Any error can be troubleshooted step by step
@@ -246,8 +243,12 @@ def update_graph(  # pylint: disable=unused-argument,too-many-locals
         & (prepared_data.index.get_level_values("Date") <= end_date)
     ]
 
-    filtered_pnl_expanded_df = calculate_pnl_expanded(filtered_prepared_data)
-    pnl_expanded_df = calculate_pnl_expanded(prepared_data)
+    filtered_pnl_expanded_df = calculate_pnl_expanded(
+        filtered_prepared_data, target_currency=target_currency
+    )
+    pnl_expanded_df = calculate_pnl_expanded(
+        prepared_data, target_currency=target_currency
+    )
 
     # Calculate PnL and get date ranges
     pnl_df = calculate_daily_pnl(pnl_expanded_df)
