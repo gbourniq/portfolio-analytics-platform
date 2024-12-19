@@ -9,6 +9,7 @@ import datetime as dtm
 
 import dash_bootstrap_components as dbc
 import plotly.express as px
+import plotly.graph_objects as go
 from dash import html
 
 from portfolio_analytics.common.utils.instruments import Currency
@@ -32,11 +33,37 @@ def create_pnl_figure(df_plot):
         plotly.graph_objects.Figure: Styled line chart
     """
     df = df_plot.copy().reset_index()
-    fig = px.line(df, x="Date", y="PnL")
-    fig.update_layout(xaxis_title="", yaxis_title="", showlegend=False)
-    fig.update_traces(
-        fill="tozeroy", fillcolor="rgba(0,100,80,0.2)", line_color="rgb(0,100,80)"
+
+    # Add a zero baseline trace
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=df["Date"],
+            y=[0] * len(df),
+            mode="lines",
+            line=dict(color="rgba(0,0,0,0)"),
+            showlegend=False,
+            hoverinfo="skip",
+        )
     )
+
+    # Add the PnL trace with fill
+    fig.add_trace(
+        go.Scatter(
+            x=df["Date"],
+            y=df["PnL"],
+            mode="lines",
+            fill="tonexty",  # Fill to the trace before it (the zero line)
+            fillcolor="rgba(0,100,80,0.2)",
+            line=dict(color="rgb(0,100,80)", width=2),
+            showlegend=False,
+        )
+    )
+
+    fig.update_layout(
+        xaxis_title="", yaxis_title="", showlegend=False, hovermode="x unified"
+    )
+
     return fig
 
 
@@ -152,7 +179,8 @@ def create_performance_table(df, is_positive=True, currency=Currency.USD):
                             [
                                 html.Td(row["symbol"]),
                                 html.Td(
-                                    f"{symbol}{row['pnl']:,.2f}",
+                                    f"{'-' if row['pnl'] < 0 else ''}"
+                                    f"{symbol}{abs(row['pnl']):,.2f}",
                                     className="text-end",
                                 ),
                             ]
