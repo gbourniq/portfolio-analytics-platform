@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.20 (2024-12-19)
+
+### Fix
+
+* Convert to target currency after computing pnl ([#21](https://github.com/gbourniq/portfolio-analytics/issues/21)) ([`ec091ff`](https://github.com/gbourniq/portfolio-analytics/commit/ec091ff3e5d1b7772099753b25c59514e6d102d6))
+
 ## v0.1.19 (2024-12-19)
 
 ### Fix
