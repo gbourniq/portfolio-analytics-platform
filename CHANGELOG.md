@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.19 (2024-12-19)
+
+### Fix
+
+* Fix currency conversion ([#20](https://github.com/gbourniq/portfolio-analytics/issues/20)) ([`9fa3901`](https://github.com/gbourniq/portfolio-analytics/commit/9fa390148785eeed3933abdc7cb892fff921aeed))
+
 ## v0.1.18 (2024-12-19)
 
 
