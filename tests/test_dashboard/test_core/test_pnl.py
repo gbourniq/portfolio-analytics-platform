@@ -25,7 +25,7 @@ def sample_df() -> pd.DataFrame:
             "Ticker": ["AAPL", "GOOGL", "AAPL"],
             "Positions": [100, 200, 150],
             "Trades": [100, 200, 50],
-            "Mid": [100, 200, 150],
+            "MidUsd": [100, 200, 150],
             "PortfolioValues": [100, 200, 150],
             "CashFlow": [100, 200, 50],
         }

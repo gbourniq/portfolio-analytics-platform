@@ -81,26 +81,25 @@ def calculate_pnl_expanded(
     _validate_date_range(df, start_date, end_date)
     df = _filter_dataframe(df, start_date, end_date, tickers)
 
-    # Convert to target currency if needed
-    if target_currency != Currency.USD:
-        df["MidUsd"] *= df[f"USD{target_currency.name}=X"]
-    df["Currency"] = target_currency.value
-
-    # Drop fx columns and rename to Mid
-    df = df.drop(columns=[col for col in df.columns if col.endswith("=X")])
-    df = df.rename(columns={"MidUsd": "Mid"})
-
     # Consider positions at t0 as 0
     df.loc[df.groupby("Ticker").head(1).index, "Positions"] = 0
     df["Trades"] = df.groupby("Ticker")["Positions"].diff()
-    df["PortfolioValues"] = df["Positions"] * df["Mid"]
-    df["CashFlow"] = (df["Trades"] * df["Mid"]).apply(lambda x: -x if x else 0)
+    df["PortfolioValues"] = df["Positions"] * df["MidUsd"]
+    df["CashFlow"] = (df["Trades"] * df["MidUsd"]).apply(lambda x: -x if x else 0)
 
     # Calculate cumulative cash flows and PnL per ticker
     df["CashFlowCumSum"] = df.groupby("Ticker")["CashFlow"].cumsum()
     df["PnL"] = df.apply(
         lambda row: row["PortfolioValues"] + row["CashFlowCumSum"], axis=1
     )
+
+    # Convert to target currency if needed
+    if target_currency != Currency.USD:
+        df["PnL"] *= df[f"USD{target_currency.name}=X"]
+    df["Currency"] = target_currency.value
+
+    # Drop fx columns and rename to Mid
+    df = df.drop(columns=[col for col in df.columns if col.endswith("=X")])
 
     return df
 
