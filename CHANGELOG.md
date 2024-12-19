@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.21 (2024-12-19)
+
+### Feature
+
+* Implement better cache mechanism and various code improvements ([#22](https://github.com/gbourniq/portfolio-analytics/issues/22)) ([`7fc67d8`](https://github.com/gbourniq/portfolio-analytics/commit/7fc67d8d0f297d068b0ea290d39a0178016c25ff))
+
 ## v0.1.20 (2024-12-19)
 
 ### Fix
