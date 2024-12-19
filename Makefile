@@ -6,32 +6,20 @@ DOCKER_COMPOSE := $(shell which docker-compose > /dev/null 2>&1 && echo docker-c
 
 # Development
 
-install-poetry:
-	python3.10 -m pip install poetry -U
-
-generate-lockfiles:
-	python3.10 -m poetry lock
-	python3.10 -m poetry export --with=api,dashboard,dev -f requirements.txt --without-hashes -o requirements.txt
-	python3.10 -m poetry export --with=api -f requirements.txt -o portfolio_analytics/api/requirements.txt
-	python3.10 -m poetry export --with=dashboard -f requirements.txt -o portfolio_analytics/dashboard/requirements.txt
-
-install-deps:
-	python3.10 -m pip install -e . -r requirements.txt
-
 fmt:
-	python3.10 -m autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive $(codebase) $(tests_dir)
-	python3.10 -m isort --profile black --line-length 89 $(codebase) $(tests_dir)
-	python3.10 -m black --line-length 89 --preview --enable-unstable-feature=string_processing $(codebase) $(tests_dir)
-	python3.10 -m ruff check --fix $(codebase) $(tests_dir)
+	python3.12 -m autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive $(codebase) $(tests_dir)
+	python3.12 -m isort --profile black --line-length 89 $(codebase) $(tests_dir)
+	python3.12 -m black --line-length 89 --preview --enable-unstable-feature=string_processing $(codebase) $(tests_dir)
+	python3.12 -m ruff check --fix $(codebase) $(tests_dir)2
 
 lint:
-	python3.10 -m autoflake --check --quiet --recursive $(codebase)
-	python3.10 -m isort --profile black --line-length 89 --check-only $(codebase)
-	python3.10 -m black --line-length 89 --check $(codebase)
-	python3.10 -m ruff check $(codebase)
-	python3.10 -m mypy $(codebase)
-	python3.10 -m flake8 --max-line-length 89 --max-doc-length 89 $(codebase)
-	python3.10 -m pylint --fail-under=9.9 $(codebase)
+	python3.12 -m autoflake --check --quiet --recursive $(codebase)
+	python3.12 -m isort --profile black --line-length 89 --check-only $(codebase)
+	python3.12 -m black --line-length 89 --check $(codebase)
+	python3.12 -m ruff check $(codebase)
+	python3.12 -m mypy $(codebase)
+	python3.12 -m flake8 --max-line-length 89 --max-doc-length 89 $(codebase)
+	python3.12 -m pylint --fail-under=9.9 $(codebase)
 
 clean:
 	find . -type f \( -name "*.pyc" -o -name ".DS_Store" -o -name "coverage.xml" \) -delete
@@ -41,10 +29,10 @@ clean:
 # Unit Testing
 
 test:
-	python3.10 -m pytest --cov=$(codebase) -m "not integration" --cov-report html --cov-report xml
+	python3.12 -m pytest --cov=$(codebase) -m "not integration" --cov-report html --cov-report xml
 
 test-coverage: test
-	cd htmlcov && python3.10 -m http.server
+	cd htmlcov && python3.12 -m http.server
 
 
 # Docker build
