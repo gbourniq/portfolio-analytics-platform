@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.22 (2024-12-19)
+
+### Fix
+
+* Autoscale graph axis for better view on pnl values ([#23](https://github.com/gbourniq/portfolio-analytics/issues/23)) ([`98f421a`](https://github.com/gbourniq/portfolio-analytics/commit/98f421aa152cd25170ad3be890b64a0d0c1ea12c))
+
 ## v0.1.21 (2024-12-19)
 
 ### Feature
