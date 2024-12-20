@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.24 (2024-12-20)
+
+### Fix
+
+* Fix poetry install in dockerfiles ([`6ee3ade`](https://github.com/gbourniq/portfolio-analytics/commit/6ee3ade258da46ccd75f45287dc296f04793e1fc))
+
 ## v0.1.23 (2024-12-19)
 
 ### Feature
