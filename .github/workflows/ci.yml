@@ -21,28 +21,20 @@ jobs:
         ! git log origin/master..HEAD --oneline --pretty=format:%s | \
           grep -Ev '^(build|chore|ci|docs|feat|fix|perf|style|refactor|test):|^Merge '
 
-  quality:
-    name: Quality Checks
+  lint:
+    name: Lint Checks
     needs: commit-check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        task: [lint, test, build]
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      # Skip Python setup for build task
-      if: matrix.task != 'build'
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
 
-    - name: Cache Python dependencies
-      # Skip cache for build task
-      if: matrix.task != 'build'
+    - name: Cache Poetry dependencies
       uses: actions/cache@v4
       with:
         path: ~/.cache/poetry
@@ -51,33 +43,22 @@ jobs:
           ${{ runner.os }}-poetry-
 
     - name: Install dependencies
-      # Skip dependencies for build task
-      if: matrix.task != 'build'
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
         poetry config virtualenvs.create false
         poetry install
 
-    - name: Set up Docker
-      if: matrix.task == 'build'
-      uses: docker/setup-buildx-action@v3
-
-    - name: Set up Docker Compose
-      if: matrix.task == 'build'
-      run: |
-        docker compose version
-
-    - name: Run ${{ matrix.task }}
-      run: make ${{ matrix.task }}
+    - name: Run lint
+      run: make lint
 
     - name: Generate Pylint Badge
-      if: matrix.task == 'lint' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       run: |
         SCORE=$(pylint portfolio_analytics --output-format=text **/*.py | sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p')
         echo "PYLINT_SCORE=$SCORE" >> $GITHUB_ENV
 
     - name: Create Pylint Badge
-      if: matrix.task == 'lint' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.GIST_SECRET }}
@@ -87,23 +68,10 @@ jobs:
         message: ${{ env.PYLINT_SCORE }}
         color: ${{ env.PYLINT_SCORE >= 9 && 'brightgreen' || env.PYLINT_SCORE >= 7 && 'yellow' || 'red' }}
 
-    - name: Upload coverage reports
-      # Only run for test task
-      if: matrix.task == 'test'
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.xml
-        fail_ci_if_error: false  # TODO: set to true
-
-  integration:
-    name: Integration Tests
-    needs: quality
+  test:
+    name: Run Tests
+    needs: commit-check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        component: [api, dashboard]
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -112,6 +80,51 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+
+    - name: Cache Poetry dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/poetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+
+    - name: Install dependencies
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        poetry config virtualenvs.create false
+        poetry install
+
+    - name: Run tests
+      run: make test
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: false
+
+  build:
+    name: Build Docker Images
+    needs: commit-check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Cache Poetry dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/poetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
 
     - name: Install dependencies
       run: |
@@ -122,16 +135,64 @@ jobs:
     - name: Set up Docker
       uses: docker/setup-buildx-action@v3
 
-    - name: Set up Docker Compose
-      run: |
-        docker compose version
+    - name: Run build
+      run: make build
 
-    - name: Start ${{ matrix.component }} service and run integration tests
-      run: make test-${{ matrix.component }}
+  integration-api:
+    name: API Integration Tests
+    needs: [lint, test, build]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Cache Poetry dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/poetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+
+    - name: Install dependencies
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        poetry config virtualenvs.create false
+        poetry install
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Start API service and run integration tests
+      run: |
+        docker compose up -d --pull never
+        pytest tests/integration -v -m api_integration
+        docker compose down
+
+  integration-dashboard:
+    name: Dashboard Integration Tests
+    needs: [lint, test, build]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Start Dashboard service and run integration tests
+      run: |
+        docker build -t dash-app-tests . -f tests/integration/test_dashboard.Dockerfile
+        docker run --rm dash-app-tests
 
   release:
     name: Release
-    needs: [commit-check, quality, integration]
+    needs: [integration-api, integration-dashboard]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
@@ -167,3 +228,37 @@ jobs:
       run: |
         git pull --rebase
         python -m semantic_release publish --patch
+
+  publish:
+    name: Publish Docker Images
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Get latest git tag
+      run: |
+        git fetch --tags
+        TAG=$(git describe --tags --abbrev=0)
+        echo "RELEASE_VERSION=${TAG}" >> $GITHUB_ENV
+
+    - name: Build and push application images
+      run: |
+        # Build images
+        docker compose build
+
+        # Tag with version and latest
+        docker tag ghcr.io/gbourniq/portfolio_analytics/api ghcr.io/gbourniq/portfolio_analytics/api:${{ env.RELEASE_VERSION }}
+        docker tag ghcr.io/gbourniq/portfolio_analytics/api ghcr.io/gbourniq/portfolio_analytics/api:latest
+        docker tag ghcr.io/gbourniq/portfolio_analytics/dashboard ghcr.io/gbourniq/portfolio_analytics/dashboard:${{ env.RELEASE_VERSION }}
+        docker tag ghcr.io/gbourniq/portfolio_analytics/dashboard ghcr.io/gbourniq/portfolio_analytics/dashboard:latest
+
+        # Push all tags
+        docker push ghcr.io/gbourniq/portfolio_analytics/api:${{ env.RELEASE_VERSION }}
+        docker push ghcr.io/gbourniq/portfolio_analytics/api:latest
+        docker push ghcr.io/gbourniq/portfolio_analytics/dashboard:${{ env.RELEASE_VERSION }}
+        docker push ghcr.io/gbourniq/portfolio_analytics/dashboard:latest
