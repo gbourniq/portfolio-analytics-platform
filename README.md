@@ -6,7 +6,7 @@
 [![Pylint Score](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/gbourniq/b149841cbef1088a8bf7671efee16734/raw/pylint.txt)](https://github.com/gbourniq/portfolio-analytics/actions)
 [![Code Coverage](https://codecov.io/gh/gbourniq/portfolio-analytics/graph/badge.svg?token=O5LIL4YV9L)](https://codecov.io/gh/gbourniq/portfolio-analytics)
 
-🌐 **Live Demo**: [dashboard.portfolio-analytics.click](dashboard.portfolio-analytics.click)
+🌐 **Live Demo**: [dashboard.portfolio-analytics.click](https://dashboard.portfolio-analytics.click)
 
 ## Overview
 
