@@ -21,7 +21,7 @@ WORKDIR /app
 COPY pyproject.toml ./pyproject.toml
 RUN python3.12 -m pip install poetry==1.8.5 && \
     poetry config virtualenvs.create false && \
-    poetry install --with=dashboard
+    poetry install --only main,dashboard
 
 # Copy source code to the container
 COPY portfolio_analytics/common/utils portfolio_analytics/common/utils
