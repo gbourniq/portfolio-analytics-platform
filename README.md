@@ -1,4 +1,4 @@
-# Portfolio Analytics
+# Portfolio Analytics Platform
 
 [![CI/CD](https://github.com/gbourniq/portfolio-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/gbourniq/portfolio-analytics/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
