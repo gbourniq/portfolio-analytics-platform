@@ -25,5 +25,8 @@ HEALTHCHECK --interval=30s --timeout=3s \
 # Command for production server
 CMD ["gunicorn", "portfolio_analytics.dashboard.dashboard_main:server", \
      "--bind", "0.0.0.0:8050", \
-     "--workers", "4", \
+     "--workers", "2", \
+     "--threads", "4", \
+     "--worker-class", "gthread", \
+     "--worker-tmp-dir", "/dev/shm", \
      "--log-level", "info"]

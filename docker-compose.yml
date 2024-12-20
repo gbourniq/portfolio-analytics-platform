@@ -7,7 +7,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/portfolio_analytics/common/data
+      - ./portfolio_analytics/common/data:/app/portfolio_analytics/common/data
     # Runs container processes with host user's UID/GID to avoid permission issues
     # Files created in volumes will be owned by the host user instead of root
     user: "${UID:-1000}:${GID:-1000}"
@@ -27,7 +27,7 @@ services:
     ports:
       - "8050:8050"
     volumes:
-      - ./data:/app/portfolio_analytics/common/data
+      - ./portfolio_analytics/common/data:/app/portfolio_analytics/common/data
     # Runs container processes with host user's UID/GID to avoid permission issues
     # Files created in volumes will be owned by the host user instead of root
     user: "${UID:-1000}:${GID:-1000}"
