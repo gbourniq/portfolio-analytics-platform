@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.26 (2024-12-20)
+
+### Fix
+
+* Fix various issues ([`dd1f3f8`](https://github.com/gbourniq/portfolio-analytics-platform/commit/dd1f3f89d561af97649c5441c9a3d60bbd19d42b))
+
 ## v0.1.25 (2024-12-20)
 
 ### Feature
