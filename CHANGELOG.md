@@ -2,6 +2,18 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.25 (2024-12-20)
+
+### Feature
+
+* Use Github Container Repository to publish docker images in CI ([`3eb6b4d`](https://github.com/gbourniq/portfolio-analytics-platform/commit/3eb6b4d07fd6da5275ccaff1a640905b56b0cdc4))
+
+### Fix
+
+* Fix semantic release ([`5bdfdef`](https://github.com/gbourniq/portfolio-analytics-platform/commit/5bdfdef7409afa222f588af1efe1ec4604d9cfb4))
+* Fix semantic release ([`92a6bf8`](https://github.com/gbourniq/portfolio-analytics-platform/commit/92a6bf8f6dd0a77d87f8975fd1b04c901c7bffc6))
+* Fix flakey dashboard integration test ([`d71e88e`](https://github.com/gbourniq/portfolio-analytics-platform/commit/d71e88e95a2aaa494d67217c5bab81b6bd5e04e7))
+
 ## v0.1.24 (2024-12-20)
 
 ### Fix
