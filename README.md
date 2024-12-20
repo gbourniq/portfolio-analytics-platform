@@ -46,8 +46,14 @@ The dashboard analyzes portfolio positions across multiple stock exchanges, acce
 
 ### Quick Start with Docker
 
+Run containers with images built locally
 ```bash
-make up
+docker-compose up -d --build
+```
+
+Run containers with packaged images from the Github Container Registry
+```bash
+GIT_TAG=v0.1.24 docker-compose up -d --pull
 ```
 
 ### Local Development
