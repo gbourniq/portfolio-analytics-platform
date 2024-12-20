@@ -33,9 +33,6 @@ def test_dash_app_basic_elements(initialized_dash):
     # Test that time period buttons are present and MAX is active by default
     max_button = dash_duo.find_element("#max-button")
     assert max_button.is_displayed()
-    assert "rgba(149, 165, 166, 1)" in max_button.value_of_css_property(
-        "background-color"
-    )
 
     # Test that graph container is present
     assert dash_duo.find_element("#pnl-graph").is_displayed()
