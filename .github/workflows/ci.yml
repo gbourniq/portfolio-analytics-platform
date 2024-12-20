@@ -198,6 +198,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
 
     steps:
     - name: Checkout code
@@ -225,6 +226,7 @@ jobs:
     - name: Semantic Release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
         git pull --rebase
         python -m semantic_release publish --patch
