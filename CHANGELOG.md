@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.29 (2024-12-22)
+
+### Documentation
+
+* Update tag to latest working version ([`99e70be`](https://github.com/gbourniq/portfolio-analytics-platform/commit/99e70bead88c5f2070aac085d98039c50c6ad4aa))
+
 ## v0.1.28 (2024-12-21)
 
 ### Fix
