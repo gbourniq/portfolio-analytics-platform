@@ -2,6 +2,17 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.27 (2024-12-21)
+
+### Feature
+
+* Improve deployment experience by adding a data-specific container and shared volume ([`0e44bec`](https://github.com/gbourniq/portfolio-analytics-platform/commit/0e44bec93215791765b54a1f914781ac17c3bdd6))
+
+### Fix
+
+* Decrease default data coverage values for fx and equity pipeline ([`f827115`](https://github.com/gbourniq/portfolio-analytics-platform/commit/f827115aab17742773681fbda6afcb9f8f18b6ee))
+* Add the data directory inside the container ([`5bcf02f`](https://github.com/gbourniq/portfolio-analytics-platform/commit/5bcf02ffb4a9b9e4155a0b97323edcdacb94caf5))
+
 ## v0.1.26 (2024-12-20)
 
 ### Fix
