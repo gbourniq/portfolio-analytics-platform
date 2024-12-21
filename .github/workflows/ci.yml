@@ -106,7 +106,7 @@ jobs:
         fail_ci_if_error: false
 
   build:
-    name: Build Docker Images
+    name: Build Test
     needs: commit-check
     runs-on: ubuntu-latest
     steps:
@@ -139,7 +139,7 @@ jobs:
       run: make build
 
   integration-tests:
-    name: Integration Tests (${{ matrix.component }})
+    name: ${{ matrix.component }}
     needs: [lint, test, build]
     runs-on: ubuntu-latest
     strategy:
