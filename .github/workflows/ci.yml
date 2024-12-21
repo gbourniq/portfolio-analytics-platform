@@ -46,7 +46,7 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
         poetry config virtualenvs.create false
-        poetry install
+        poetry install --sync --no-interaction
 
     - name: Run lint
       run: make lint
@@ -93,7 +93,7 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
         poetry config virtualenvs.create false
-        poetry install
+        poetry install --sync --no-interaction
 
     - name: Run tests
       run: make test
@@ -130,7 +130,7 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
         poetry config virtualenvs.create false
-        poetry install
+        poetry install --sync --no-interaction
 
     - name: Set up Docker
       uses: docker/setup-buildx-action@v3

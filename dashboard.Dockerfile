@@ -5,7 +5,9 @@ LABEL description="Portfolio Analytics Dashboard"
 
 # Install dependencies
 COPY pyproject.toml ./pyproject.toml
-RUN poetry install --only main,dashboard
+RUN pip install --no-cache-dir poetry==1.8.5 && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi --only main,dashboard
 
 # Copy source code to the container
 COPY portfolio_analytics/common portfolio_analytics/common
