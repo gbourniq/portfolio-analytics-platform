@@ -9,21 +9,23 @@ echo "Deploying application version ${GIT_TAG:-latest}"
 docker run -d \
   --name data \
   --user 1000:1000 \
-  -v shared-data:/data \
+  -v shared-data:/data:rw \
   ghcr.io/gbourniq/portfolio_analytics/data:${GIT_TAG:-latest}
 
 # Dashboard service
 docker run -d \
-  --name api \
+  --name dashboard \
   --user 1000:1000 \
-  -v shared-data:/app/data \
-  -p 8000:8000 \
-  ghcr.io/gbourniq/portfolio_analytics/api:${GIT_TAG:-latest}
+  --group-add 1000 \
+  -p 8050:8050 \
+  -v shared-data:/app/data:rw \
+  ghcr.io/gbourniq/portfolio_analytics/dashboard:${GIT_TAG:-latest}
 
 # API service
 docker run -d \
-  --name dashboard \
+  --name api \
   --user 1000:1000 \
-  -v shared-data:/app/data \
-  -p 8050:8050 \
-  ghcr.io/gbourniq/portfolio_analytics/dashboard:${GIT_TAG:-latest}
+  --group-add 1000 \
+  -p 8000:8000 \
+  -v shared-data:/app/data:rw \
+  ghcr.io/gbourniq/portfolio_analytics/api:${GIT_TAG:-latest}
