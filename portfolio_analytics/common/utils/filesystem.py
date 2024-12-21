@@ -17,7 +17,7 @@ from portfolio_analytics.common.utils.logging_config import setup_logger
 # Configure logging
 log = setup_logger(__name__)
 
-DATA_DIR: Final[Path] = Path(__file__).parents[1] / "data"
+DATA_DIR: Final[Path] = Path(__file__).parents[3] / "data"
 
 MARKET_DATA_DIR: Final[Path] = DATA_DIR / "market_data"
 FX_DATA_PATH: Final[Path] = MARKET_DATA_DIR / "fx.snappy.parquet"
