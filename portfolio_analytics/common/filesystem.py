@@ -37,7 +37,7 @@ def get_version():
         str: The version string from pyproject.toml, or '0.0.0' if reading fails
     """
     try:
-        pyproject_path = Path(__file__).parents[3] / "pyproject.toml"
+        pyproject_path = Path(__file__).parents[2] / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             pyproject_data = tomli.load(f)
         return pyproject_data["tool"]["poetry"]["version"]

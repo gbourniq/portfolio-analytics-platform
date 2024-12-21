@@ -138,46 +138,13 @@ jobs:
     - name: Run build
       run: make build
 
-  integration-api:
-    name: API Integration Tests
+  integration-tests:
+    name: Integration Tests (${{ matrix.component }})
     needs: [lint, test, build]
     runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Cache Poetry dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/poetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-poetry-
-
-    - name: Install dependencies
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
-        poetry config virtualenvs.create false
-        poetry install
-
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v3
-
-    - name: Start API service and run integration tests
-      run: |
-        docker compose up -d --pull never
-        pytest tests/integration -v -m api_integration
-        docker compose down
-
-  integration-dashboard:
-    name: Dashboard Integration Tests
-    needs: [lint, test, build]
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [api, dashboard]
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -185,14 +152,12 @@ jobs:
     - name: Set up Docker
       uses: docker/setup-buildx-action@v3
 
-    - name: Start Dashboard service and run integration tests
-      run: |
-        docker build -t dash-app-tests . -f tests/integration/test_dashboard.Dockerfile
-        docker run --rm dash-app-tests
+    - name: Run integration tests
+      run: make test-${{ matrix.component }}
 
   release:
     name: Release
-    needs: [integration-api, integration-dashboard]
+    needs: [integration-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
@@ -226,7 +191,7 @@ jobs:
 
   publish:
     name: Publish Docker Images
-    needs: release
+    needs: [release]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code

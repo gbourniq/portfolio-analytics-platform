@@ -60,10 +60,15 @@ build: up down
 # Integration Testing
 
 test-dashboard:
+	make up
+	$(DOCKER_COMPOSE) logs api
 	docker build -t dash-app-tests . -f tests/integration/test_dashboard.Dockerfile
-	docker run --rm dash-app-tests
+	docker run --network host --rm dash-app-tests
+	make down
 
 test-api:
 	make up
-	pytest tests/integration -v -m api_integration
+	$(DOCKER_COMPOSE) logs api
+	docker build -t api-tests . -f tests/integration/test_api.Dockerfile
+	docker run --network host --rm api-tests
 	make down
