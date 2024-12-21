@@ -55,7 +55,7 @@ class EquityUpdateRequest(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "start_date": "2018-01-01",
+                "start_date": "2022-01-01",
                 "end_date": "2024-12-31",
                 "instruments": [
                     StockIndex.SP500,  # type: ignore
