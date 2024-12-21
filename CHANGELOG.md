@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.28 (2024-12-21)
+
+### Fix
+
+* Fix file permission defined in dashboard container ([`1ac663b`](https://github.com/gbourniq/portfolio-analytics-platform/commit/1ac663b47e6c0e3ccc26294ce7b71cdc5a63c5c3))
+
 ## v0.1.27 (2024-12-21)
 
 ### Feature
