@@ -187,7 +187,7 @@ jobs:
       run: |
         pip install python-semantic-release==7.34.6
         git pull --rebase
-        python -m semantic_release publish --patch
+        python -m semantic_release publish
 
   publish:
     name: Publish Docker Images
