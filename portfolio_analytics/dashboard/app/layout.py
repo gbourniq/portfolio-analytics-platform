@@ -8,8 +8,8 @@ dashboard.
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from portfolio_analytics.common.utils.filesystem import get_portfolio_files, get_version
-from portfolio_analytics.common.utils.instruments import Currency
+from portfolio_analytics.common.filesystem import get_portfolio_files, get_version
+from portfolio_analytics.common.instruments import Currency
 
 # Styles configuration
 STYLES = {

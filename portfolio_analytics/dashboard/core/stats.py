@@ -9,7 +9,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.logging_config import setup_logger
 from portfolio_analytics.dashboard.utils.dashboard_exceptions import (
     MetricsCalculationError,
 )

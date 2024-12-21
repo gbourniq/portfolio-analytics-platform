@@ -11,8 +11,8 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from portfolio_analytics.api.common import ApiTag
-from portfolio_analytics.common.utils.filesystem import get_portfolio_files
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.filesystem import get_portfolio_files
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)

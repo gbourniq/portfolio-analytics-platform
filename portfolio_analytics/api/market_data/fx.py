@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import List, Optional
 
 from portfolio_analytics.api.market_data.base import YahooFinanceDataSource
-from portfolio_analytics.common.utils.filesystem import FX_DATA_PATH
-from portfolio_analytics.common.utils.instruments import Currency
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.filesystem import FX_DATA_PATH
+from portfolio_analytics.common.instruments import Currency
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)

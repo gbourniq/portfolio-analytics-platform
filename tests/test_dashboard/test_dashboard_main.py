@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from portfolio_analytics.common.utils.instruments import Currency
+from portfolio_analytics.common.instruments import Currency
 from portfolio_analytics.dashboard.dashboard_main import (
     _handle_button_styles,
     _handle_date_range,

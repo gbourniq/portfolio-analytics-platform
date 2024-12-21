@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import pytest
 from dash import html
 
-from portfolio_analytics.common.utils.instruments import Currency
+from portfolio_analytics.common.instruments import Currency
 from portfolio_analytics.dashboard.app.components import (
     create_performance_table,
     create_pnl_figure,

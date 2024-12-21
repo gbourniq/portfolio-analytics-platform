@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 ENDPOINT = "/portfolio"
-FILESYSTEM_MODULE = "portfolio_analytics.common.utils.filesystem"
+FILESYSTEM_MODULE = "portfolio_analytics.common.filesystem"
 
 
 @pytest.fixture

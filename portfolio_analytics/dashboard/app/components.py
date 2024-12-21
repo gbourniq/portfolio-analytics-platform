@@ -12,7 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
-from portfolio_analytics.common.utils.instruments import Currency
+from portfolio_analytics.common.instruments import Currency
 from portfolio_analytics.dashboard.app.layout import STYLES
 
 

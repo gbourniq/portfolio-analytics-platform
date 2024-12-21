@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from portfolio_analytics.api.market_data.equity import Equity
-from portfolio_analytics.common.utils.instruments import Currency, StockIndex
+from portfolio_analytics.common.instruments import Currency, StockIndex
 
 
 @pytest.fixture

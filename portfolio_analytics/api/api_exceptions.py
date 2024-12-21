@@ -5,7 +5,7 @@ from http import HTTPStatus
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)

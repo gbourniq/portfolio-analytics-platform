@@ -16,11 +16,11 @@ from starlette.background import BackgroundTask
 
 from portfolio_analytics.api.api_exceptions import ResourceNotFoundError
 from portfolio_analytics.api.common import ApiTag
-from portfolio_analytics.common.utils.filesystem import (
+from portfolio_analytics.common.filesystem import (
     PORTFOLIO_SAMPLES_DIR,
     PORTFOLIO_UPLOADS_DIR,
 )
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)

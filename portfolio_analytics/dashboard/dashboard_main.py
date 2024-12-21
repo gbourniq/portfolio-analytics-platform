@@ -17,14 +17,14 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 from dateutil.relativedelta import relativedelta
 
-from portfolio_analytics.common.utils.filesystem import (
+from portfolio_analytics.common.filesystem import (
     EQUITY_FILE_PATH,
     FX_DATA_PATH,
     PORTFOLIO_UPLOADS_DIR,
     get_portfolio_files,
 )
-from portfolio_analytics.common.utils.instruments import Currency
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.instruments import Currency
+from portfolio_analytics.common.logging_config import setup_logger
 from portfolio_analytics.dashboard.app.components import (
     add_drawdown_indicators,
     create_error_state,
