@@ -1,7 +1,6 @@
-# Ignore cache directories
-**/__cache__/
-**/.cache/
-**/cache/
+# Ignore files inside cache directories, but keep the directories
+**/cache/**
+!**/cache/
 
 # Ignore uploads directories but preserve samples
 **/uploads/*

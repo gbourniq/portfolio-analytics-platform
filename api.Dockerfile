@@ -8,7 +8,7 @@ COPY pyproject.toml ./pyproject.toml
 RUN poetry install --only main,api
 
 # Copy source code to the container
-COPY portfolio_analytics/common/utils portfolio_analytics/common/utils
+COPY portfolio_analytics/common portfolio_analytics/common
 COPY portfolio_analytics/api portfolio_analytics/api
 
 # Set ownership and switch to non-root user
