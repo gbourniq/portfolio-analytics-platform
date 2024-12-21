@@ -58,9 +58,7 @@ class TestGetVersion:
         with open(mock_path, "wb") as f:
             tomli_w.dump(mock_toml, f)
 
-        with patch.object(
-            Path, "parents", property(lambda x: [None, None, None, tmp_path])
-        ):
+        with patch.object(Path, "parents", property(lambda x: [None, None, tmp_path])):
             # When
             version = get_version()
 
@@ -70,7 +68,7 @@ class TestGetVersion:
     def test_get_version_file_not_found(self):
         """Tests fallback version when pyproject.toml is not found."""
         with patch.object(
-            Path, "parents", property(lambda x: [None, None, None, Path("/nonexistent")])
+            Path, "parents", property(lambda x: [None, None, Path("/nonexistent")])
         ):
             # When
             version = get_version()

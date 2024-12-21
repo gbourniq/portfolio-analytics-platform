@@ -20,9 +20,6 @@ RUN pip install --no-cache-dir \
     pandas
 
 # Copy files to container
-COPY portfolio_analytics/dashboard portfolio_analytics/dashboard
-COPY portfolio_analytics/common portfolio_analytics/common
-COPY data data
 COPY pyproject.toml ./pyproject.toml
 COPY tests/integration/test_dashboard.py ./test_dashboard.py
 

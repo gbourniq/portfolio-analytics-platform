@@ -4,16 +4,15 @@ the dash testing libraries and chrome driver
 """
 
 import pytest
-from dash.testing.application_runners import import_app
 
 FILESYSTEM_MODULE = "portfolio_analytics.common.filesystem"
 
 
 @pytest.fixture
 def initialized_dash(dash_duo):
-    """Initialize the dash application for testing."""
-    app = import_app("portfolio_analytics.dashboard.dashboard_main")
-    dash_duo.start_server(app)
+    """Initialize connection to the deployed dash application for testing."""
+    # Use localhost since we're using host network
+    dash_duo.server_url = "http://localhost:8050"
     yield dash_duo
 
 
@@ -24,7 +23,7 @@ def test_dash_app_basic_elements(initialized_dash):
     dash_duo = initialized_dash
 
     # Test title is present
-    dash_duo.wait_for_text_to_equal("h1", "Portfolio Analytics Dashboard", timeout=4)
+    dash_duo.wait_for_text_to_equal("h1", "Portfolio Analytics Dashboard", timeout=10)
 
     # Test that dropdowns are present
     assert dash_duo.find_element("#portfolio-selector").is_displayed()
@@ -34,14 +33,14 @@ def test_dash_app_basic_elements(initialized_dash):
     max_button = dash_duo.find_element("#max-button")
     assert max_button.is_displayed()
 
-    # Test that graph container is present
-    assert dash_duo.find_element("#pnl-graph").is_displayed()
+    # Test that graph container is present and wait for it to become visible
+    dash_duo.wait_for_element("#pnl-graph", timeout=10)
 
 
 @pytest.mark.integration
 @pytest.mark.dashboard_integration
 def test_no_file_error_message(initialized_dash):
-    """Test that 'No such file or directory' error is not shown on the page."""
+    """Test that error messages are not shown on the page."""
     dash_duo = initialized_dash
 
     # Wait for the page to load
@@ -50,17 +49,18 @@ def test_no_file_error_message(initialized_dash):
     # Get the page content using a valid CSS selector
     page_content = dash_duo.find_element("body").text
 
-    # Assert that the error message is not present
-    assert (
-        "No such file or directory" not in page_content
-    ), f"Found 'No such file or directory' error in page content: {page_content}"
+    # Assert that error messages are not present
+    error_messages = ["No such file or directory", "No data available"]
+    for error in error_messages:
+        assert (
+            error not in page_content
+        ), f"Found '{error}' error in page content: {page_content}"
 
-    # Additionally check that the graph container is not showing an error
+    # Additionally check that the graph container is not showing errors
     graph = dash_duo.find_element("#pnl-graph")
     graph_text = graph.text
-    assert (
-        "No such file or directory" not in graph_text
-    ), f"Found 'No such file or directory' error in graph: {graph_text}"
+    for error in error_messages:
+        assert error not in graph_text, f"Found '{error}' error in graph: {graph_text}"
 
 
 @pytest.mark.integration

@@ -1,5 +1,11 @@
 volumes:
   shared-data:
+    driver: local
+    # driver_opts:
+    #   type: none
+    #   o: bind
+    #   device: ${PWD}/data
+    # name: portfolio-analytics-data
 
 services:
   data:
@@ -8,8 +14,8 @@ services:
       context: .
       dockerfile: data.Dockerfile
     volumes:
-      - shared-data:/data
-    user: "appuser:appuser"
+      - shared-data:/data:rw
+    user: "1000:1000"
 
   api:
     image: ghcr.io/gbourniq/portfolio_analytics/api:${GIT_TAG:-latest}
@@ -19,8 +25,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - shared-data:/app/data
-    user: "appuser:appuser"
+      - shared-data:/app/data:rw
+    group_add:
+      - "1000"
+    user: "1000:1000"
     deploy:
       resources:
         limits:
@@ -28,6 +36,9 @@ services:
           memory: 384M
         reservations:
           memory: 192M
+    depends_on:
+      data:
+        condition: service_started
 
   dashboard:
     image: ghcr.io/gbourniq/portfolio_analytics/dashboard:${GIT_TAG:-latest}
@@ -37,8 +48,10 @@ services:
     ports:
       - "8050:8050"
     volumes:
-      - shared-data:/app/data
-    user: "appuser:appuser"
+      - shared-data:/app/data:rw
+    group_add:
+      - "1000"
+    user: "1000:1000"
     deploy:
       resources:
         limits:
@@ -46,3 +59,6 @@ services:
           memory: 1024M
         reservations:
           memory: 512M
+    depends_on:
+      data:
+        condition: service_started

@@ -2,17 +2,24 @@ FROM alpine:3.18
 
 WORKDIR /data
 
-# Create appuser with same UID/GID as in python-base
-RUN addgroup -g 1000 appuser && \
-    adduser -D -u 1000 -G appuser appuser
+# Add user with same UID/GID as other containers
+RUN addgroup -g 1000 appgroup && \
+    adduser -u 1000 -G appgroup -s /bin/sh -D appuser
 
-# Copy your data directory
-COPY data/ .
+# Create directories first
+RUN mkdir -p /data/market_data /data/cache /data/portfolios
 
-# Make sure the files are owned by appuser
-RUN chown -R appuser:appuser /data
+# Copy data files
+COPY --chown=1000:1000 data/ .
 
-# Use appuser
-USER appuser
+# Set permissions for shared access and verify
+RUN chown -R 1000:1000 /data && \
+    chmod -R 775 /data && \
+    chmod g+s /data /data/market_data /data/cache /data/portfolios && \
+    echo "Verifying permissions:" && \
+    ls -ln /data
 
-CMD ["tail", "-f", "/dev/null"]
+USER 1000:1000
+
+# Add permission check to startup
+CMD ls -ln /data && echo "Running as: $(id)" && tail -f /dev/null

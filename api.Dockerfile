@@ -12,14 +12,14 @@ COPY portfolio_analytics/common portfolio_analytics/common
 COPY portfolio_analytics/api portfolio_analytics/api
 
 # Set ownership and switch to non-root user
-RUN chown -R appuser:appuser /app
-USER appuser
+RUN chown -R 1000:1000 /app
+USER 1000:1000
 
 # Expose port
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s \
+HEALTHCHECK --interval=10s --timeout=3s \
   CMD curl -f http://localhost:8000/ || exit 1
 
 # Command for production server
