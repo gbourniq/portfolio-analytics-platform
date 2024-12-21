@@ -53,7 +53,7 @@ docker-compose up -d --build
 
 Run the app in production
 ```bash
-GIT_TAG=v0.1.27 ./deploy.sh
+GIT_TAG=v0.1.28 ./deploy.sh
 ```
 
 ### Local Development
