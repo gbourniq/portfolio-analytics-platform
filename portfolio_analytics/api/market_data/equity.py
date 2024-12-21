@@ -20,9 +20,9 @@ from portfolio_analytics.api.market_data.base import (
     MarketDataException,
     YahooFinanceDataSource,
 )
-from portfolio_analytics.common.utils.filesystem import EQUITY_FILE_PATH
-from portfolio_analytics.common.utils.instruments import Currency, StockIndex
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.filesystem import EQUITY_FILE_PATH
+from portfolio_analytics.common.instruments import Currency, StockIndex
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)

@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from portfolio_analytics.api.market_data.fx import FX
-from portfolio_analytics.common.utils.instruments import Currency
+from portfolio_analytics.common.instruments import Currency
 
 
 @pytest.fixture

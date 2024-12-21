@@ -6,7 +6,7 @@ the dash testing libraries and chrome driver
 import pytest
 from dash.testing.application_runners import import_app
 
-FILESYSTEM_MODULE = "portfolio_analytics.common.utils.filesystem"
+FILESYSTEM_MODULE = "portfolio_analytics.common.filesystem"
 
 
 @pytest.fixture

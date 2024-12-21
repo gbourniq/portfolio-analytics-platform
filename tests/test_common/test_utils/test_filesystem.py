@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 import tomli_w
 
-from portfolio_analytics.common.utils.filesystem import (
+from portfolio_analytics.common.filesystem import (
     cleanup_cache,
     cleanup_portfolio_uploads,
     get_portfolio_files,
@@ -17,7 +17,7 @@ from portfolio_analytics.common.utils.filesystem import (
     read_portfolio_file,
 )
 
-FILESYSTEM_MODULE = "portfolio_analytics.common.utils.filesystem"
+FILESYSTEM_MODULE = "portfolio_analytics.common.filesystem"
 
 
 def _to_csv_bytes(df):

@@ -11,8 +11,8 @@ from typing import Tuple
 
 import pandas as pd
 
-from portfolio_analytics.common.utils.filesystem import CACHE_DIR, read_portfolio_file
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.filesystem import CACHE_DIR, read_portfolio_file
+from portfolio_analytics.common.logging_config import setup_logger
 from portfolio_analytics.dashboard.utils.cache_utils import (
     generate_cache_key_prepared_data,
 )

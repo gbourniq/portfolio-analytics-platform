@@ -20,8 +20,8 @@ from portfolio_analytics.api.api_exceptions import (
     portfolio_analytics_exception_handler,
 )
 from portfolio_analytics.api.common import CORS_ORIGIN_DOMAINS, URL_PREFIX, ApiTag
-from portfolio_analytics.common.utils.filesystem import get_version
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.filesystem import get_version
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)

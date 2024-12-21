@@ -1,4 +1,16 @@
+volumes:
+  shared-data:
+
 services:
+  data:
+    image: ghcr.io/gbourniq/portfolio_analytics/data:${GIT_TAG:-latest}
+    build:
+      context: .
+      dockerfile: data.Dockerfile
+    volumes:
+      - shared-data:/data
+    user: "appuser:appuser"
+
   api:
     image: ghcr.io/gbourniq/portfolio_analytics/api:${GIT_TAG:-latest}
     build:
@@ -7,10 +19,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./portfolio_analytics/common/data:/app/portfolio_analytics/common/data
-    # Runs container processes with host user's UID/GID to avoid permission issues
-    # Files created in volumes will be owned by the host user instead of root
-    user: "${UID:-1000}:${GID:-1000}"
+      - shared-data:/app/data
+    user: "appuser:appuser"
     deploy:
       resources:
         limits:
@@ -27,10 +37,8 @@ services:
     ports:
       - "8050:8050"
     volumes:
-      - ./portfolio_analytics/common/data:/app/portfolio_analytics/common/data
-    # Runs container processes with host user's UID/GID to avoid permission issues
-    # Files created in volumes will be owned by the host user instead of root
-    user: "${UID:-1000}:${GID:-1000}"
+      - shared-data:/app/data
+    user: "appuser:appuser"
     deploy:
       resources:
         limits:

@@ -15,8 +15,8 @@ from pydantic import BaseModel, Field, model_validator
 
 from portfolio_analytics.api.common import ApiTag
 from portfolio_analytics.api.market_data.fx import FX
-from portfolio_analytics.common.utils.instruments import Currency
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.instruments import Currency
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)
@@ -55,7 +55,7 @@ class FXUpdateRequest(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "start_date": "2018-01-01",
+                "start_date": "2022-01-01",
                 "end_date": "2024-12-31",
                 "instruments": ["USD", "EUR", "GBP"],
             }

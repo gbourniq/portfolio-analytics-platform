@@ -3,8 +3,8 @@ Intended for running analysis on a portfolio file
 instead of relying on the Dashboard
 """
 
-from portfolio_analytics.common.utils.instruments import Currency
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.instruments import Currency
+from portfolio_analytics.common.logging_config import setup_logger
 
 from portfolio_analytics.dashboard.core.data_loader import prepare_data
 from portfolio_analytics.dashboard.core.pnl import calculate_pnl, calculate_daily_pnl
@@ -24,7 +24,7 @@ log = setup_logger(__name__)
 
 try:
 
-    from portfolio_analytics.common.utils.filesystem import (
+    from portfolio_analytics.common.filesystem import (
         EQUITY_FILE_PATH,
         FX_DATA_PATH,
         PORTFOLIO_SAMPLES_DIR,

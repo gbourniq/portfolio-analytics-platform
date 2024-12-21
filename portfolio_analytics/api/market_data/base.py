@@ -22,8 +22,8 @@ import requests
 import urllib3
 import yfinance as yf
 
-from portfolio_analytics.common.utils.instruments import Instrument
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.instruments import Instrument
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)

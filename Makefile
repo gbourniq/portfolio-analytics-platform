@@ -10,7 +10,7 @@ fmt:
 	python3.12 -m autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive $(codebase) $(tests_dir)
 	python3.12 -m isort --profile black --line-length 89 $(codebase) $(tests_dir)
 	python3.12 -m black --line-length 89 --preview --enable-unstable-feature=string_processing $(codebase) $(tests_dir)
-	python3.12 -m ruff check --fix $(codebase) $(tests_dir)2
+	python3.12 -m ruff check --fix $(codebase) $(tests_dir)
 
 lint:
 	python3.12 -m autoflake --check --quiet --recursive $(codebase)

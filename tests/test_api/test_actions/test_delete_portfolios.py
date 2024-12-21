@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from portfolio_analytics.api.actions.delete_portfolios import router
-from portfolio_analytics.common.utils.filesystem import PORTFOLIO_UPLOADS_DIR
+from portfolio_analytics.common.filesystem import PORTFOLIO_UPLOADS_DIR
 
 
 class TestDeletePortfolios:

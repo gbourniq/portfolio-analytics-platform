@@ -1,7 +1,7 @@
 import random
 
 import pandas as pd
-from portfolio_analytics.common.utils.filesystem import PORTFOLIO_SAMPLES_DIR
+from portfolio_analytics.common.filesystem import PORTFOLIO_SAMPLES_DIR
 
 
 # Function to generate mock data

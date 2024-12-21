@@ -1,4 +1,4 @@
-from portfolio_analytics.common.utils.instruments import Currency, StockIndex
+from portfolio_analytics.common.instruments import Currency, StockIndex
 
 
 def test_currency_enum():

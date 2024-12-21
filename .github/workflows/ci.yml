@@ -256,14 +256,11 @@ jobs:
         # Build images
         docker compose build
 
-        # Tag with version and latest
-        docker tag ghcr.io/gbourniq/portfolio_analytics/api ghcr.io/gbourniq/portfolio_analytics/api:${{ env.RELEASE_VERSION }}
-        docker tag ghcr.io/gbourniq/portfolio_analytics/api ghcr.io/gbourniq/portfolio_analytics/api:latest
-        docker tag ghcr.io/gbourniq/portfolio_analytics/dashboard ghcr.io/gbourniq/portfolio_analytics/dashboard:${{ env.RELEASE_VERSION }}
-        docker tag ghcr.io/gbourniq/portfolio_analytics/dashboard ghcr.io/gbourniq/portfolio_analytics/dashboard:latest
-
-        # Push all tags
-        docker push ghcr.io/gbourniq/portfolio_analytics/api:${{ env.RELEASE_VERSION }}
-        docker push ghcr.io/gbourniq/portfolio_analytics/api:latest
-        docker push ghcr.io/gbourniq/portfolio_analytics/dashboard:${{ env.RELEASE_VERSION }}
-        docker push ghcr.io/gbourniq/portfolio_analytics/dashboard:latest
+        # Define services and tag/push images
+        for service in api dashboard data; do
+          IMAGE="ghcr.io/gbourniq/portfolio_analytics/$service"
+          docker tag $IMAGE $IMAGE:${{ env.RELEASE_VERSION }}
+          docker tag $IMAGE $IMAGE:latest
+          docker push $IMAGE:${{ env.RELEASE_VERSION }}
+          docker push $IMAGE:latest
+        done

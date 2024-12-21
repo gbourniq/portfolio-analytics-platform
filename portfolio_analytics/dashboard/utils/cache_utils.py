@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from portfolio_analytics.common.utils.instruments import Currency
-from portfolio_analytics.common.utils.logging_config import setup_logger
+from portfolio_analytics.common.instruments import Currency
+from portfolio_analytics.common.logging_config import setup_logger
 
 # Configure logging
 log = setup_logger(__name__)
