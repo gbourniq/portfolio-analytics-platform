@@ -46,7 +46,7 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
         poetry config virtualenvs.create false
-        poetry install
+        poetry install --sync --no-interaction
 
     - name: Run lint
       run: make lint
@@ -93,7 +93,7 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
         poetry config virtualenvs.create false
-        poetry install
+        poetry install --sync --no-interaction
 
     - name: Run tests
       run: make test
@@ -106,7 +106,7 @@ jobs:
         fail_ci_if_error: false
 
   build:
-    name: Build Docker Images
+    name: Build Test
     needs: commit-check
     runs-on: ubuntu-latest
     steps:
@@ -130,7 +130,7 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
         poetry config virtualenvs.create false
-        poetry install
+        poetry install --sync --no-interaction
 
     - name: Set up Docker
       uses: docker/setup-buildx-action@v3
@@ -139,7 +139,7 @@ jobs:
       run: make build
 
   integration-tests:
-    name: Integration Tests (${{ matrix.component }})
+    name: ${{ matrix.component }}
     needs: [lint, test, build]
     runs-on: ubuntu-latest
     strategy:
@@ -187,7 +187,7 @@ jobs:
       run: |
         pip install python-semantic-release==7.34.6
         git pull --rebase
-        python -m semantic_release publish --patch
+        python -m semantic_release publish
 
   publish:
     name: Publish Docker Images

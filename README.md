@@ -53,7 +53,7 @@ docker-compose up -d --build
 
 Run the app in production
 ```bash
-GIT_TAG=v0.1.28 ./deploy.sh
+GIT_TAG=v0.1.28 ./run.sh
 ```
 
 ### Local Development
@@ -62,7 +62,7 @@ GIT_TAG=v0.1.28 ./deploy.sh
 
 ```bash
 python3.12 -m pip install poetry -U
-poetry install
+poetry install --sync --no-interaction
 ```
 
 2. Start services:

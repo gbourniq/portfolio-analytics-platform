@@ -23,7 +23,3 @@ RUN groupadd -g 1000 appgroup && \
     useradd -u 1000 -g appgroup -s /bin/bash -m appuser
 
 WORKDIR /app
-
-# Install poetry
-RUN python3.12 -m pip install poetry==1.8.5 && \
-    poetry config virtualenvs.create false
