@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.0 (2024-12-22)
+
+### Feature
+
+* Semantic release to bump patch/minor/major based on fix/feat/BREAKING CHANGE: commit msg ([`349fe1c`](https://github.com/gbourniq/portfolio-analytics-platform/commit/349fe1c7a99abc8bb06ffdc57ff856065ec17c11))
+
+### Fix
+
+* Update docker deploy commands ([`4a42f6a`](https://github.com/gbourniq/portfolio-analytics-platform/commit/4a42f6a5c7fd443b2fe3398b695a91d233f304c8))
+
 ## v0.1.29 (2024-12-22)
 
 ### Documentation
