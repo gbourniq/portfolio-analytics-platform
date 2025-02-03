@@ -45,7 +45,7 @@ pylint = "^3.3.1"
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
 python-semantic-release = "7.34.6"
-ruff = "^0.7.0"
+ruff = "^0.9.4"
 types-requests = "^2.32.0.20241016"
 tomli-w = "^1.1.0"
 dash = {extras = ["testing"], version = "^2.18.2"}
