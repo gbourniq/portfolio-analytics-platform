@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v0.3.0 (2025-03-05)
+
+### Feature
+
+* Allow autobot commit messages in CI ([`942a4e5`](https://github.com/gbourniq/portfolio-analytics-platform/commit/942a4e5ba9584c2a2d625855f1f110ed8cad2a26))
+
+### Documentation
+
+* Update readme ([`2b0cfe4`](https://github.com/gbourniq/portfolio-analytics-platform/commit/2b0cfe4f560ae78b866dbb975e389ef5edcb14d8))
+
 ## v0.2.0 (2024-12-22)
 
 ### Feature
