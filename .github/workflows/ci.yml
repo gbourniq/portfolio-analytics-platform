@@ -19,7 +19,7 @@ jobs:
     - name: "Check commit messages match angular style"
       run: |
         ! git log origin/master..HEAD --oneline --pretty=format:%s | \
-          grep -Ev '^(build|chore|ci|docs|feat|fix|perf|style|refactor|test):|^Merge '
+          grep -Ev '^(build|chore|ci|docs|feat|fix|perf|style|refactor|test|chore\(deps\)|chore\(deps-dev\)):|^Merge '
 
   lint:
     name: Lint Checks
